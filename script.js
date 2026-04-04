@@ -3,6 +3,28 @@ const returnCursor = document.querySelector(".return-cursor");
 const returnCursorComment = document.querySelector(".return-cursor-comment");
 const returnCursorLabel = document.querySelector(".return-cursor-label");
 const finePointer = window.matchMedia("(pointer: fine)").matches;
+const creatorMessages = [
+  "Oops, let me put that back.",
+  "I liked it a little better here.",
+  "Just fixing my tiny detail.",
+  "That spot felt right to me.",
+  "Let's keep it this way.",
+  "I saved its favorite place.",
+  "Putting that back gently.",
+  "I think it lives here.",
+  "Just a small designer instinct.",
+  "Let me neaten that up.",
+  "Back where it feels happy.",
+  "I'll keep this one here.",
+  "A tiny adjustment from me.",
+  "This place suits it more.",
+  "Just returning it home.",
+  "I'm attached to this placement.",
+  "Keeping the layout cozy.",
+  "That looked nicest right here.",
+  "A soft reset by Kaustubh.",
+  "I promise this spot works.",
+];
 
 if (cursor && finePointer) {
   const moveCursor = (event) => {
@@ -375,7 +397,8 @@ if (stage && draggableNames.length) {
 
               clearBotState(node);
               returnCursor.classList.add("is-commenting");
-              const fullComment = returnCursorComment?.dataset.fullComment || "";
+              const fullComment =
+                creatorMessages[Math.floor(Math.random() * creatorMessages.length)];
 
               const startTypingSequence = () => {
                 if (!activeReturn || activeReturn.node !== node || !returnCursorComment) {
@@ -456,6 +479,7 @@ if (stage && draggableNames.length) {
               };
 
               if (returnCursorComment && returnCursorLabel) {
+                returnCursorComment.dataset.fullComment = fullComment;
                 returnCursorLabel.style.opacity = "0";
                 returnCursorComment.textContent = fullComment;
 
