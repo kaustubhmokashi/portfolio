@@ -147,7 +147,14 @@ const dragGuideText = document.querySelector(".drag-guide-text");
 const isMenuBlockingBot = () => coarsePointer && document.body.classList.contains("menu-open");
 const blankSelectionBox = document.createElement("div");
 blankSelectionBox.className = "blank-selection-box";
+blankSelectionBox.innerHTML = `
+  <span class="interactive-corner interactive-corner-top-left" aria-hidden="true"></span>
+  <span class="interactive-corner interactive-corner-top-right" aria-hidden="true"></span>
+  <span class="interactive-corner interactive-corner-bottom-left" aria-hidden="true"></span>
+  <span class="interactive-corner interactive-corner-bottom-right" aria-hidden="true"></span>
+`;
 document.body.append(blankSelectionBox);
+let blankSelectionHideTimeout = 0;
 
 const isBlankCanvasTarget = (target) =>
   target === document.body ||
@@ -160,13 +167,27 @@ const showBlankSelectionBox = (x, y) => {
   const left = Math.min(Math.max(x - boxSize / 2, 0), window.innerWidth - boxSize);
   const top = Math.min(Math.max(y - boxSize / 2, 0), window.innerHeight - boxSize);
 
-  blankSelectionBox.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+  window.clearTimeout(blankSelectionHideTimeout);
+  blankSelectionBox.style.transition = "none";
+  blankSelectionBox.style.transform = `translate3d(${left}px, ${top}px, 0) scale(1)`;
   blankSelectionBox.style.opacity = "1";
+  void blankSelectionBox.offsetWidth;
+  blankSelectionBox.style.transition = "opacity 220ms ease, transform 220ms ease";
+  blankSelectionHideTimeout = window.setTimeout(() => {
+    blankSelectionBox.style.opacity = "0";
+    blankSelectionBox.style.transform = `translate3d(${left}px, ${top}px, 0) scale(1.18)`;
+    window.setTimeout(() => {
+      if (blankSelectionBox.style.opacity === "0") {
+        blankSelectionBox.style.transform = "translate3d(-9999px, -9999px, 0) scale(1)";
+      }
+    }, 220);
+  }, 420);
 };
 
 const hideBlankSelectionBox = () => {
+  window.clearTimeout(blankSelectionHideTimeout);
   blankSelectionBox.style.opacity = "0";
-  blankSelectionBox.style.transform = "translate3d(-9999px, -9999px, 0)";
+  blankSelectionBox.style.transform = "translate3d(-9999px, -9999px, 0) scale(1)";
 };
 
 if (topMenu && topMenuToggle) {
@@ -241,6 +262,9 @@ if (stage && draggableItems.length) {
   const taglineNode = draggableItems.find(
     (item) => item.dataset.draggableName === "tagline"
   );
+  const idleNudgeCandidates = draggableItems.filter(
+    (item) => item.dataset.draggableName !== "tagline"
+  );
   const taglineDefaultText = defaultTextMap.get(taglineNode) || "";
   let selectedName = null;
   let hasPositionedNames = false;
@@ -256,6 +280,7 @@ if (stage && draggableItems.length) {
   const returnQueue = [];
   let activeReturn = null;
   let activeTextEdit = null;
+  let idleTaglineEditState = null;
 
   const selectName = (node) => {
     draggableItems.forEach((item) => item.classList.toggle("is-selected", item === node));
@@ -535,13 +560,26 @@ if (stage && draggableItems.length) {
     }
 
     setNodeDisplayText(taglineNode, text, showCaret);
+
+    if (idleTaglineEditState) {
+      taglineNode.style.minHeight = `${idleTaglineEditState.minHeight}px`;
+      taglineNode.style.minWidth = `${idleTaglineEditState.minWidth}px`;
+      recenterNodeToPoint(
+        taglineNode,
+        idleTaglineEditState.centerX,
+        idleTaglineEditState.centerY
+      );
+    }
   };
 
   const resetTaglineDisplay = () => {
     if (taglineNode) {
       clearTextEditState(taglineNode);
+      taglineNode.style.minHeight = "";
+      taglineNode.style.minWidth = "";
     }
 
+    idleTaglineEditState = null;
     setTaglineDisplay(taglineDefaultText);
   };
 
@@ -653,8 +691,8 @@ if (stage && draggableItems.length) {
         return;
       }
 
-      const targetNode =
-        draggableItems[Math.floor(Math.random() * draggableItems.length)];
+      const targetPool = idleNudgeCandidates.length ? idleNudgeCandidates : draggableItems;
+      const targetNode = targetPool[Math.floor(Math.random() * targetPool.length)];
       const targetPosition = getElementPosition(targetNode);
       const targetCenter = {
         x: targetPosition.left + targetPosition.width / 2,
@@ -861,6 +899,14 @@ if (stage && draggableItems.length) {
 
                     selectName(taglineNode);
                     taglineNode.classList.add("is-text-editing");
+                    idleTaglineEditState = {
+                      centerX: taglinePosition.left + taglinePosition.width / 2,
+                      centerY: taglinePosition.top + taglinePosition.height / 2,
+                      minWidth: taglinePosition.width,
+                      minHeight: taglinePosition.height,
+                    };
+                    taglineNode.style.minHeight = `${idleTaglineEditState.minHeight}px`;
+                    taglineNode.style.minWidth = `${idleTaglineEditState.minWidth}px`;
                     let deleteIndex = taglineDefaultText.length;
                     let caretVisible = true;
 
