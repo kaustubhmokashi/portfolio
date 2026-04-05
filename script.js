@@ -4,6 +4,8 @@ const returnCursorComment = document.querySelector(".return-cursor-comment");
 const returnCursorLabel = document.querySelector(".return-cursor-label");
 const returnCursorPrompt = document.querySelector(".return-cursor-prompt");
 const finePointer = window.matchMedia("(pointer: fine)").matches;
+const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+const LONG_PRESS_EDIT_DELAY_MS = 420;
 const creatorMessageTiers = [
   [
     "Oops, let me put that back.",
@@ -72,6 +74,28 @@ const creatorMessageTiers = [
     "I appreciate the commitment to being incorrect.",
   ],
 ];
+const creatorEditComments = [
+  "I saw the rewrite. I kept the original cut.",
+  "Cute edit. I’m keeping my line.",
+  "We tried new copy. I missed the old one.",
+  "That sentence had a little adventure. It’s home now.",
+  "You wrote a version. I wrote it back.",
+  "Tiny copy rebellion detected.",
+  "That line and I have history.",
+  "I gave the words their old seats back.",
+  "Nice remix. I restored the original track.",
+  "I’m letting the first draft win this one.",
+  "The copy wandered off. I brought it back.",
+  "I read your edit. I chose peace.",
+  "That line was doing just fine before.",
+  "I put the sentence back on its best behavior.",
+  "We visited a new version. I drove us back.",
+  "That copy change had confidence.",
+  "The wording got experimental. I got involved.",
+  "I returned the sentence to factory settings.",
+  "That line knows where it belongs.",
+  "I let the original wording have its moment again.",
+];
 const idlePrompts = [
   "Try moving it.",
   "Go on, drag it.",
@@ -79,7 +103,8 @@ const idlePrompts = [
   "Give it a little nudge.",
   "Try touching the layout.",
 ];
-const IDLE_PROMPT_DELAY_MS = 30000;
+const FIRST_IDLE_PROMPT_DELAY_MS = 5000;
+const RECURRING_IDLE_PROMPT_DELAY_MS = 30000;
 const draggableItems = [...document.querySelectorAll(".draggable-item")];
 
 if (cursor && finePointer) {
@@ -108,12 +133,20 @@ const dragGuideLabel = document.querySelector(".drag-guide-label");
 const dragGuideText = document.querySelector(".drag-guide-text");
 
 if (stage && draggableItems.length) {
+  const getNodeTextElement = (node) => node.querySelector(".editable-text");
+  const defaultTextMap = new Map(
+    draggableItems.map((item) => [item, (getNodeTextElement(item)?.textContent || "").trim()])
+  );
+  const taglineNode = draggableItems.find(
+    (item) => item.dataset.draggableName === "tagline"
+  );
+  const taglineDefaultText = defaultTextMap.get(taglineNode) || "";
   let selectedName = null;
   let hasPositionedNames = false;
   let hasUserMovedName = false;
   let totalMoveCount = 0;
   let idleTimerId = 0;
-  let idleDelayMs = IDLE_PROMPT_DELAY_MS;
+  let idleDelayMs = FIRST_IDLE_PROMPT_DELAY_MS;
   let isIdlePromptRunning = false;
   let returnCursorVisible = false;
   let returnCursorPosition = { x: -9999, y: -9999 };
@@ -121,6 +154,7 @@ if (stage && draggableItems.length) {
   const pendingReturnTimeouts = new WeakMap();
   const returnQueue = [];
   let activeReturn = null;
+  let activeTextEdit = null;
 
   const selectName = (node) => {
     draggableItems.forEach((item) => item.classList.toggle("is-selected", item === node));
@@ -130,6 +164,27 @@ if (stage && draggableItems.length) {
   const clearSelection = () => {
     draggableItems.forEach((item) => item.classList.remove("is-selected"));
     selectedName = null;
+  };
+
+  const getNodeDisplayText = (node) => {
+    const textNode = getNodeTextElement(node);
+    return (textNode?.textContent || "").trim();
+  };
+
+  const setNodeDisplayText = (node, text, showCaret = false) => {
+    const textNode = getNodeTextElement(node);
+    if (!textNode) {
+      return;
+    }
+
+    textNode.textContent = text;
+    node.classList.toggle("is-caret-visible", showCaret);
+  };
+
+  const recenterNodeToPoint = (node, centerX, centerY) => {
+    const rect = node.getBoundingClientRect();
+    node.style.left = `${centerX - rect.width / 2}px`;
+    node.style.top = `${centerY - rect.height / 2}px`;
   };
 
   const centerNames = () => {
@@ -229,10 +284,27 @@ if (stage && draggableItems.length) {
 
     helperState.timeouts.forEach((timeoutId) => clearTimeout(timeoutId));
     helperState.timeouts = [];
+
+    if (helperState.cleanup) {
+      helperState.cleanup();
+      helperState.cleanup = null;
+    }
   };
 
   const clearBotState = (node) => {
     node.classList.remove("is-bot-hover", "is-bot-pressing");
+  };
+
+  const clearTextEditState = (node) => {
+    node.classList.remove("is-text-editing", "is-caret-visible");
+    const textNode = getNodeTextElement(node);
+    if (!textNode) {
+      return;
+    }
+
+    textNode.removeAttribute("contenteditable");
+    textNode.removeAttribute("spellcheck");
+    textNode.blur();
   };
 
   const getElementPosition = (node) => {
@@ -249,7 +321,7 @@ if (stage && draggableItems.length) {
   };
 
   const removeQueuedReturn = (node) => {
-    const queueIndex = returnQueue.findIndex((item) => item === node);
+    const queueIndex = returnQueue.findIndex((item) => item.node === node);
 
     if (queueIndex !== -1) {
       returnQueue.splice(queueIndex, 1);
@@ -356,12 +428,116 @@ if (stage && draggableItems.length) {
     }
   };
 
+  const setTaglineDisplay = (text, showCaret = false) => {
+    if (!taglineNode) {
+      return;
+    }
+
+    setNodeDisplayText(taglineNode, text, showCaret);
+  };
+
+  const resetTaglineDisplay = () => {
+    if (taglineNode) {
+      clearTextEditState(taglineNode);
+    }
+
+    setTaglineDisplay(taglineDefaultText);
+  };
+
   const getCreatorMessage = () => {
     const tierIndex =
       totalMoveCount <= 1 ? 0 : totalMoveCount <= 3 ? 1 : 2;
     const messages = creatorMessageTiers[tierIndex];
 
     return messages[Math.floor(Math.random() * messages.length)];
+  };
+
+  const getCreatorEditComment = () =>
+    creatorEditComments[Math.floor(Math.random() * creatorEditComments.length)];
+
+  const getSharedPrefixLength = (currentText, defaultText) => {
+    const maxLength = Math.min(currentText.length, defaultText.length);
+    let prefixLength = 0;
+
+    while (
+      prefixLength < maxLength &&
+      currentText[prefixLength].toLowerCase() === defaultText[prefixLength].toLowerCase()
+    ) {
+      prefixLength += 1;
+    }
+
+    return prefixLength;
+  };
+
+  const queueReturn = (node, reason) => {
+    removeQueuedReturn(node);
+    returnQueue.push({ node, reason });
+    processReturnQueue();
+  };
+
+  const finalizeTextEdit = (node, { revert = false } = {}) => {
+    if (!activeTextEdit || activeTextEdit.node !== node) {
+      return;
+    }
+
+    const { originalText, defaultText, centerX, centerY } = activeTextEdit;
+    if (revert) {
+      setNodeDisplayText(node, originalText);
+    } else {
+      setNodeDisplayText(node, getNodeDisplayText(node));
+    }
+
+    recenterNodeToPoint(node, centerX, centerY);
+
+    clearTextEditState(node);
+    activeTextEdit = null;
+    hasUserMovedName = true;
+    scheduleIdlePrompt();
+
+    if (revert || getNodeDisplayText(node) === defaultText) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      pendingReturnTimeouts.delete(node);
+      queueReturn(node, "text");
+    }, 1000);
+
+    pendingReturnTimeouts.set(node, timeoutId);
+  };
+
+  const beginTextEdit = (node) => {
+    const textNode = getNodeTextElement(node);
+    if (!textNode) {
+      return;
+    }
+
+    if (activeTextEdit && activeTextEdit.node !== node) {
+      finalizeTextEdit(activeTextEdit.node);
+    }
+
+    const rect = node.getBoundingClientRect();
+    cancelReturnForNode(node);
+    selectName(node);
+    node.classList.add("is-text-editing");
+    textNode.setAttribute("contenteditable", "true");
+    textNode.setAttribute("spellcheck", "false");
+    textNode.focus();
+
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(textNode);
+    range.collapse(false);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    activeTextEdit = {
+      node,
+      originalText: getNodeDisplayText(node),
+      defaultText: defaultTextMap.get(node) || "",
+      centerX: rect.left + rect.width / 2,
+      centerY: rect.top + rect.height / 2,
+    };
   };
 
   const scheduleIdlePrompt = () => {
@@ -393,6 +569,7 @@ if (stage && draggableItems.length) {
         node: targetNode,
         frameId: 0,
         timeouts: [],
+        cleanup: null,
       };
 
       isIdlePromptRunning = true;
@@ -513,37 +690,174 @@ if (stage && draggableItems.length) {
                 returnCursor.classList.remove("is-prompting");
                 clearDragGuide();
 
-                const exitPoint = getRandomEdgePoint(targetCenter.x, targetCenter.y);
-                const exitControl = getCurveControlPoint(targetCenter, exitPoint, 0.18);
-                const exitStart = performance.now();
-                const exitDuration = 700;
+                const finishIdleExit = (fromPoint) => {
+                  const exitPoint = getRandomEdgePoint(fromPoint.x, fromPoint.y);
+                  const exitControl = getCurveControlPoint(fromPoint, exitPoint, 0.18);
+                  const exitStart = performance.now();
+                  const exitDuration = 700;
 
-                const animateExit = (exitNow) => {
-                  const exitProgress = Math.min((exitNow - exitStart) / exitDuration, 1);
-                  const easedExit = 1 - (1 - exitProgress) * (1 - exitProgress);
-                  const nextPoint = getQuadraticPoint(
-                    targetCenter,
-                    exitControl,
-                    exitPoint,
-                    easedExit
-                  );
+                  const animateExit = (exitNow) => {
+                    const exitProgress = Math.min((exitNow - exitStart) / exitDuration, 1);
+                    const easedExit = 1 - (1 - exitProgress) * (1 - exitProgress);
+                    const nextPoint = getQuadraticPoint(
+                      fromPoint,
+                      exitControl,
+                      exitPoint,
+                      easedExit
+                    );
 
-                  positionReturnCursor(nextPoint.x, nextPoint.y);
+                    positionReturnCursor(nextPoint.x, nextPoint.y);
 
-                  if (exitProgress < 1) {
-                    idleState.frameId = requestAnimationFrame(animateExit);
+                    if (exitProgress < 1) {
+                      idleState.frameId = requestAnimationFrame(animateExit);
+                      return;
+                    }
+
+                    if (idleState.cleanup) {
+                      idleState.cleanup();
+                      idleState.cleanup = null;
+                    }
+
+                    activeReturn = null;
+                    isIdlePromptRunning = false;
+                    hideReturnCursor();
+                    if (returnQueue.length > 0) {
+                      processReturnQueue();
+                      return;
+                    }
+
+                    idleDelayMs = RECURRING_IDLE_PROMPT_DELAY_MS;
+                    scheduleIdlePrompt();
+                  };
+
+                  idleState.frameId = requestAnimationFrame(animateExit);
+                };
+
+                if (!taglineNode || !taglineDefaultText) {
+                  finishIdleExit(targetCenter);
+                  return;
+                }
+
+                const taglinePosition = getElementPosition(taglineNode);
+                const taglineEditPoint = {
+                  x: taglinePosition.left + taglinePosition.width - 10,
+                  y: taglinePosition.top + taglinePosition.height / 2,
+                };
+
+                idleState.cleanup = () => {
+                  resetTaglineDisplay();
+                };
+
+                animateReturnCursorTo(taglineEditPoint, 520, () => {
+                  if (!activeReturn || activeReturn.node !== targetNode) {
                     return;
                   }
 
-      activeReturn = null;
-      isIdlePromptRunning = false;
-      hideReturnCursor();
-      idleDelayMs = IDLE_PROMPT_DELAY_MS;
-      scheduleIdlePrompt();
-    };
+                  const beginTaglineEdit = () => {
+                    if (!activeReturn || activeReturn.node !== targetNode) {
+                      return;
+                    }
 
-    idleState.frameId = requestAnimationFrame(animateExit);
-  };
+                    selectName(taglineNode);
+                    taglineNode.classList.add("is-text-editing");
+                    let deleteIndex = taglineDefaultText.length;
+                    let caretVisible = true;
+
+                    setTaglineDisplay(taglineDefaultText, true);
+
+                    const deleteNextCharacter = () => {
+                      if (!activeReturn || activeReturn.node !== targetNode) {
+                        return;
+                      }
+
+                      deleteIndex -= 1;
+                      setTaglineDisplay(taglineDefaultText.slice(0, deleteIndex), true);
+
+                      if (deleteIndex > 0) {
+                        const deleteTimeout = window.setTimeout(deleteNextCharacter, 62);
+                        idleState.timeouts.push(deleteTimeout);
+                        return;
+                      }
+
+                      let typeIndex = 0;
+
+                      const typeNextCharacter = () => {
+                        if (!activeReturn || activeReturn.node !== targetNode) {
+                          return;
+                        }
+
+                        typeIndex += 1;
+                        setTaglineDisplay(taglineDefaultText.slice(0, typeIndex), true);
+
+                        if (typeIndex < taglineDefaultText.length) {
+                          const typeTimeout = window.setTimeout(typeNextCharacter, 96);
+                          idleState.timeouts.push(typeTimeout);
+                          return;
+                        }
+
+                        const blinkInterval = window.setInterval(() => {
+                          if (!activeReturn || activeReturn.node !== targetNode) {
+                            return;
+                          }
+
+                          caretVisible = !caretVisible;
+                          setTaglineDisplay(taglineDefaultText, caretVisible);
+                        }, 320);
+
+                        idleState.timeouts.push(blinkInterval);
+
+                        const blinkPauseTimeout = window.setTimeout(() => {
+                          if (!activeReturn || activeReturn.node !== targetNode) {
+                            return;
+                          }
+
+                          setTaglineDisplay(taglineDefaultText);
+                          finishIdleExit(taglineEditPoint);
+                        }, 1200);
+
+                        idleState.timeouts.push(blinkPauseTimeout);
+                      };
+
+                      const retypePauseTimeout = window.setTimeout(typeNextCharacter, 380);
+                      idleState.timeouts.push(retypePauseTimeout);
+                    };
+
+                    const deleteStartPauseTimeout = window.setTimeout(deleteNextCharacter, 320);
+                    idleState.timeouts.push(deleteStartPauseTimeout);
+                  };
+
+                  taglineNode.classList.add("is-bot-hover");
+
+                  const releaseFirstClick = window.setTimeout(() => {
+                    if (!activeReturn || activeReturn.node !== targetNode) {
+                      return;
+                    }
+
+                    taglineNode.classList.remove("is-bot-pressing");
+                  }, 70);
+
+                  const startSecondClick = window.setTimeout(() => {
+                    if (!activeReturn || activeReturn.node !== targetNode) {
+                      return;
+                    }
+
+                    taglineNode.classList.add("is-bot-pressing");
+                  }, 130);
+
+                  const finishDoubleClick = window.setTimeout(() => {
+                    if (!activeReturn || activeReturn.node !== targetNode) {
+                      return;
+                    }
+
+                    taglineNode.classList.remove("is-bot-pressing");
+                    taglineNode.classList.remove("is-bot-hover");
+                    beginTaglineEdit();
+                  }, 210);
+
+                  taglineNode.classList.add("is-bot-pressing");
+                  idleState.timeouts.push(releaseFirstClick, startSecondClick, finishDoubleClick);
+                });
+              };
 
               idleState.frameId = requestAnimationFrame(animateNudgeBack);
             };
@@ -566,11 +880,211 @@ if (stage && draggableItems.length) {
       return;
     }
 
-    const node = returnQueue.shift();
+    const { node, reason } = returnQueue.shift();
     const origin = originMap.get(node);
 
-    if (!origin) {
+    if (!origin && reason !== "text") {
       processReturnQueue();
+      return;
+    }
+
+    if (reason === "text") {
+      const current = getElementPosition(node);
+      const currentText = getNodeDisplayText(node);
+      const defaultText = defaultTextMap.get(node) || currentText;
+
+      if (currentText === defaultText) {
+        clearTextEditState(node);
+        processReturnQueue();
+        return;
+      }
+
+      const currentCenterX = current.left + current.width / 2;
+      const currentCenterY = current.top + current.height / 2;
+      const startPoint = returnCursorVisible
+        ? { x: returnCursorPosition.x, y: returnCursorPosition.y }
+        : getRandomEdgePoint(currentCenterX, currentCenterY);
+      const helperState = {
+        node,
+        frameId: 0,
+        timeouts: [],
+      };
+
+      activeReturn = helperState;
+      positionReturnCursor(startPoint.x, startPoint.y);
+
+      const editPoint = {
+        x: current.left + current.width - 10,
+        y: current.top + current.height / 2,
+      };
+      const lockedCenterX = current.left + current.width / 2;
+      const lockedCenterY = current.top + current.height / 2;
+
+      animateReturnCursorTo(editPoint, 520, () => {
+        if (!activeReturn || activeReturn.node !== node) {
+          return;
+        }
+
+        node.classList.add("is-bot-hover", "is-bot-pressing");
+
+        const releaseFirstClick = window.setTimeout(() => {
+          node.classList.remove("is-bot-pressing");
+        }, 70);
+
+        const startSecondClick = window.setTimeout(() => {
+          if (!activeReturn || activeReturn.node !== node) {
+            return;
+          }
+
+          node.classList.add("is-bot-pressing");
+        }, 130);
+
+        const finishDoubleClick = window.setTimeout(() => {
+          if (!activeReturn || activeReturn.node !== node) {
+            return;
+          }
+
+          clearBotState(node);
+          selectName(node);
+          node.classList.add("is-text-editing");
+          const sharedPrefixLength = getSharedPrefixLength(currentText, defaultText);
+          let deleteIndex = currentText.length;
+
+          setNodeDisplayText(node, currentText, true);
+          recenterNodeToPoint(node, lockedCenterX, lockedCenterY);
+
+          const deleteNextCharacter = () => {
+            if (!activeReturn || activeReturn.node !== node) {
+              return;
+            }
+
+            deleteIndex -= 1;
+            setNodeDisplayText(node, currentText.slice(0, deleteIndex), true);
+            recenterNodeToPoint(node, lockedCenterX, lockedCenterY);
+
+            if (deleteIndex > sharedPrefixLength) {
+              const deleteTimeout = window.setTimeout(deleteNextCharacter, 55);
+              helperState.timeouts.push(deleteTimeout);
+              return;
+            }
+
+            let typeIndex = sharedPrefixLength;
+
+            const typeNextCharacter = () => {
+              if (!activeReturn || activeReturn.node !== node) {
+                return;
+              }
+
+              typeIndex += 1;
+              setNodeDisplayText(node, defaultText.slice(0, typeIndex), true);
+              recenterNodeToPoint(node, lockedCenterX, lockedCenterY);
+
+              if (typeIndex < defaultText.length) {
+                const typeTimeout = window.setTimeout(typeNextCharacter, 88);
+                helperState.timeouts.push(typeTimeout);
+                return;
+              }
+
+              clearTextEditState(node);
+              setNodeDisplayText(node, defaultText);
+              recenterNodeToPoint(node, lockedCenterX, lockedCenterY);
+
+              const commentStartTimeout = window.setTimeout(() => {
+                if (!activeReturn || activeReturn.node !== node) {
+                  return;
+                }
+
+                returnCursor.classList.add("is-commenting");
+                const fullComment = getCreatorEditComment();
+                returnCursorComment.dataset.fullComment = fullComment;
+                returnCursorComment.textContent = "";
+                let commentIndex = 0;
+
+                const typeComment = () => {
+                  if (!activeReturn || activeReturn.node !== node) {
+                    return;
+                  }
+
+                  commentIndex += 1;
+                  returnCursorComment.textContent = fullComment.slice(0, commentIndex);
+
+                  if (commentIndex < fullComment.length) {
+                    const commentTimeout = window.setTimeout(typeComment, 28);
+                    helperState.timeouts.push(commentTimeout);
+                    return;
+                  }
+
+                  const holdTimeout = window.setTimeout(() => {
+                    if (!activeReturn || activeReturn.node !== node) {
+                      return;
+                    }
+
+                    returnCursor.classList.remove("is-commenting");
+
+                    if (returnQueue.length > 0) {
+                      activeReturn = null;
+                      processReturnQueue();
+                      return;
+                    }
+
+                    const exitPoint = getRandomEdgePoint(editPoint.x, editPoint.y);
+                    const exitStartPoint = {
+                      x: returnCursorPosition.x,
+                      y: returnCursorPosition.y,
+                    };
+                    const exitControlPoint = getCurveControlPoint(
+                      exitStartPoint,
+                      exitPoint,
+                      0.2
+                    );
+                    const exitStart = performance.now();
+                    const exitDuration = 560;
+
+                    const animateExit = (exitNow) => {
+                      const exitProgress = Math.min((exitNow - exitStart) / exitDuration, 1);
+                      const easedExit = 1 - (1 - exitProgress) * (1 - exitProgress);
+                      const nextPoint = getQuadraticPoint(
+                        exitStartPoint,
+                        exitControlPoint,
+                        exitPoint,
+                        easedExit
+                      );
+
+                      positionReturnCursor(nextPoint.x, nextPoint.y);
+
+                      if (exitProgress < 1) {
+                        helperState.frameId = requestAnimationFrame(animateExit);
+                        return;
+                      }
+
+                      activeReturn = null;
+                      hideReturnCursor();
+                      processReturnQueue();
+                    };
+
+                    helperState.frameId = requestAnimationFrame(animateExit);
+                  }, 2000);
+
+                  helperState.timeouts.push(holdTimeout);
+                };
+
+                typeComment();
+              }, 500);
+
+              helperState.timeouts.push(commentStartTimeout);
+            };
+
+            const typeStartTimeout = window.setTimeout(typeNextCharacter, 280);
+            helperState.timeouts.push(typeStartTimeout);
+          };
+
+          const deleteStartTimeout = window.setTimeout(deleteNextCharacter, 280);
+          helperState.timeouts.push(deleteStartTimeout);
+        }, 210);
+
+        helperState.timeouts.push(releaseFirstClick, startSecondClick, finishDoubleClick);
+      });
+
       return;
     }
 
@@ -901,9 +1415,58 @@ if (stage && draggableItems.length) {
   }
 
   draggableItems.forEach((node) => {
-    node.addEventListener("pointerdown", (event) => {
+    const textNode = getNodeTextElement(node);
+
+    textNode?.addEventListener("blur", () => {
+      if (activeTextEdit?.node === node) {
+        finalizeTextEdit(node);
+      }
+    });
+
+    textNode?.addEventListener("input", () => {
+      if (activeTextEdit?.node !== node) {
+        return;
+      }
+
+      const rect = node.getBoundingClientRect();
+      node.style.left = `${activeTextEdit.centerX - rect.width / 2}px`;
+      node.style.top = `${activeTextEdit.centerY - rect.height / 2}px`;
+    });
+
+    textNode?.addEventListener("keydown", (event) => {
+      if (activeTextEdit?.node !== node) {
+        return;
+      }
+
+      if (event.key === "Enter") {
+        event.preventDefault();
+        finalizeTextEdit(node);
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        finalizeTextEdit(node, { revert: true });
+      }
+    });
+
+    node.addEventListener("dblclick", (event) => {
+      event.preventDefault();
       event.stopPropagation();
-      idleDelayMs = IDLE_PROMPT_DELAY_MS;
+      idleDelayMs = FIRST_IDLE_PROMPT_DELAY_MS;
+      beginTextEdit(node);
+    });
+
+    node.addEventListener("pointerdown", (event) => {
+      if (activeTextEdit?.node === node) {
+        return;
+      }
+
+      if (activeTextEdit && activeTextEdit.node !== node) {
+        finalizeTextEdit(activeTextEdit.node);
+      }
+
+      event.stopPropagation();
+      idleDelayMs = FIRST_IDLE_PROMPT_DELAY_MS;
       selectName(node);
 
       if (activeReturn && activeReturn.node === node) {
@@ -925,14 +1488,56 @@ if (stage && draggableItems.length) {
       const pointerId = event.pointerId;
       const startCenterX = rect.left + rect.width / 2;
       const startCenterY = rect.top + rect.height / 2;
+      const startClientX = event.clientX;
+      const startClientY = event.clientY;
       let didMoveElement = false;
+      let dragStarted = false;
+      let longPressTriggered = false;
+      let longPressTimeoutId = 0;
 
-      node.classList.add("is-dragging");
-      node.setPointerCapture(pointerId);
+      const startDrag = () => {
+        if (dragStarted || longPressTriggered) {
+          return;
+        }
+
+        dragStarted = true;
+        node.classList.add("is-dragging");
+        node.setPointerCapture(pointerId);
+      };
+
+      if (coarsePointer) {
+        longPressTimeoutId = window.setTimeout(() => {
+          longPressTriggered = true;
+          beginTextEdit(node);
+        }, LONG_PRESS_EDIT_DELAY_MS);
+      } else {
+        startDrag();
+      }
 
       const moveName = (moveEvent) => {
         if (moveEvent.pointerId !== pointerId) {
           return;
+        }
+
+        if (longPressTriggered) {
+          return;
+        }
+
+        const deltaX = moveEvent.clientX - startClientX;
+        const deltaY = moveEvent.clientY - startClientY;
+        const travelDistance = Math.hypot(deltaX, deltaY);
+
+        if (!dragStarted) {
+          if (coarsePointer && travelDistance < 8) {
+            return;
+          }
+
+          if (longPressTimeoutId) {
+            clearTimeout(longPressTimeoutId);
+            longPressTimeoutId = 0;
+          }
+
+          startDrag();
         }
 
         hasUserMovedName = true;
@@ -959,6 +1564,25 @@ if (stage && draggableItems.length) {
 
       const releaseName = (upEvent) => {
         if (upEvent.pointerId !== pointerId) {
+          return;
+        }
+
+        if (longPressTimeoutId) {
+          clearTimeout(longPressTimeoutId);
+          longPressTimeoutId = 0;
+        }
+
+        if (longPressTriggered) {
+          window.removeEventListener("pointermove", moveName);
+          window.removeEventListener("pointerup", releaseName);
+          window.removeEventListener("pointercancel", releaseName);
+          return;
+        }
+
+        if (!dragStarted) {
+          window.removeEventListener("pointermove", moveName);
+          window.removeEventListener("pointerup", releaseName);
+          window.removeEventListener("pointercancel", releaseName);
           return;
         }
 
@@ -995,8 +1619,7 @@ if (stage && draggableItems.length) {
         const timeoutId = window.setTimeout(() => {
           pendingReturnTimeouts.delete(node);
           removeQueuedReturn(node);
-          returnQueue.push(node);
-          processReturnQueue();
+          queueReturn(node, "move");
         }, 1000);
 
         pendingReturnTimeouts.set(node, timeoutId);
@@ -1014,21 +1637,25 @@ if (stage && draggableItems.length) {
       centerNames();
     }
 
-    idleDelayMs = IDLE_PROMPT_DELAY_MS;
+    idleDelayMs = FIRST_IDLE_PROMPT_DELAY_MS;
     scheduleIdlePrompt();
   });
 
   document.addEventListener("pointerdown", (event) => {
+    if (activeTextEdit && !event.target.closest(".draggable-item")) {
+      finalizeTextEdit(activeTextEdit.node);
+    }
+
     if (!event.target.closest(".draggable-item")) {
       clearSelection();
     }
 
-    idleDelayMs = IDLE_PROMPT_DELAY_MS;
+    idleDelayMs = FIRST_IDLE_PROMPT_DELAY_MS;
     scheduleIdlePrompt();
   });
 
   window.addEventListener("pointermove", () => {
-    idleDelayMs = IDLE_PROMPT_DELAY_MS;
+    idleDelayMs = FIRST_IDLE_PROMPT_DELAY_MS;
     scheduleIdlePrompt();
   }, { passive: true });
 
