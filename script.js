@@ -109,6 +109,8 @@ const idlePrompts = [
 const FIRST_IDLE_PROMPT_DELAY_MS = 5000;
 const RECURRING_IDLE_PROMPT_DELAY_MS = 30000;
 const draggableItems = [...document.querySelectorAll(".draggable-item")];
+const repairableTitles = [...document.querySelectorAll(".repairable-title")];
+let totalMoveCount = 0;
 
 if (cursor) {
   const moveCursor = (event) => {
@@ -190,6 +192,42 @@ const hideBlankSelectionBox = () => {
   blankSelectionBox.style.transform = "translate3d(-9999px, -9999px, 0) scale(1)";
 };
 
+const setSharedDragGuide = (x1, y1, x2, y2) => {
+  if (!dragGuideLine) {
+    return;
+  }
+
+  dragGuideLine.setAttribute("x1", x1);
+  dragGuideLine.setAttribute("y1", y1);
+  dragGuideLine.setAttribute("x2", x2);
+  dragGuideLine.setAttribute("y2", y2);
+  dragGuideLine.style.opacity = "1";
+
+  if (dragGuideLabel && dragGuideText) {
+    const deltaX = Math.round(x2 - x1);
+    const deltaY = Math.round(y2 - y1);
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+
+    dragGuideText.textContent = `dx: ${deltaX},  dy: ${deltaY}`;
+    dragGuideLabel.style.transform = `translate3d(${midX}px, ${midY}px, 0) translate(-50%, -50%)`;
+    dragGuideLabel.style.opacity = "1";
+  }
+};
+
+const clearSharedDragGuide = () => {
+  if (!dragGuideLine) {
+    return;
+  }
+
+  dragGuideLine.style.opacity = "0";
+
+  if (dragGuideLabel) {
+    dragGuideLabel.style.opacity = "0";
+    dragGuideLabel.style.transform = "translate3d(-9999px, -9999px, 0)";
+  }
+};
+
 if (topMenu && topMenuToggle) {
   const updateMobileTogglePinning = () => {
     if (!coarsePointer || window.innerWidth > 640 || !pageHeading) {
@@ -269,7 +307,6 @@ if (stage && draggableItems.length) {
   let selectedName = null;
   let hasPositionedNames = false;
   let hasUserMovedName = false;
-  let totalMoveCount = 0;
   let idleTimerId = 0;
   let idleDelayMs = FIRST_IDLE_PROMPT_DELAY_MS;
   let isIdlePromptRunning = false;
@@ -518,7 +555,7 @@ if (stage && draggableItems.length) {
       cancelAnimationFrame(activeReturn.frameId);
       clearHelperTimeouts(activeReturn);
       activeReturn = null;
-      clearDragGuide();
+      clearSharedDragGuide();
       hideReturnCursor();
     }
   };
@@ -876,7 +913,7 @@ if (stage && draggableItems.length) {
                 targetNode.style.top = `${currentTop}px`;
                 targetNode.classList.remove("is-bot-pressing");
                 returnCursor.classList.remove("is-prompting");
-                clearDragGuide();
+    clearSharedDragGuide();
 
                 const finishIdleExit = (fromPoint) => {
                   const exitPoint = getRandomEdgePoint(fromPoint.x, fromPoint.y);
@@ -1879,4 +1916,1091 @@ if (stage && draggableItems.length) {
   }, { passive: true });
 
   scheduleIdlePrompt();
+}
+
+if (repairableTitles.length) {
+  const repairableTextMap = new Map(
+    repairableTitles.map((node) => [
+      node,
+      node.querySelector(".repairable-text-content")?.textContent?.trim() || "",
+    ])
+  );
+  const pendingRepairTimeouts = new WeakMap();
+  const repairQueue = [];
+  const repairOffsets = new WeakMap(repairableTitles.map((node) => [node, { x: 0, y: 0 }]));
+  const repairMoveSnapshots = new WeakMap();
+  const repairOriginMap = new WeakMap();
+  let activeRepair = null;
+  let activeRepairEdit = null;
+  let selectedRepairable = null;
+  let repairCursorVisible = false;
+  let repairCursorPosition = { x: -9999, y: -9999 };
+
+  const getRepairableTextNode = (node) => node.querySelector(".repairable-text-content");
+  const getRepairableText = (node) => (getRepairableTextNode(node)?.textContent || "").trim();
+  const getRepairableOffset = (node) => repairOffsets.get(node) || { x: 0, y: 0 };
+
+  const setRepairableOffset = (node, x, y) => {
+    repairOffsets.set(node, { x, y });
+    node.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+  };
+
+  const recenterRepairableToPoint = (node, centerX, centerY) => {
+    const rect = node.getBoundingClientRect();
+    const currentOffset = getRepairableOffset(node);
+    const currentCenterX = rect.left + rect.width / 2;
+    const currentCenterY = rect.top + rect.height / 2;
+
+    setRepairableOffset(
+      node,
+      currentOffset.x + (centerX - currentCenterX),
+      currentOffset.y + (centerY - currentCenterY)
+    );
+  };
+
+  const updateRepairableOrigins = () => {
+    repairableTitles.forEach((node) => {
+      const rect = node.getBoundingClientRect();
+      const currentOffset = getRepairableOffset(node);
+      repairOriginMap.set(node, {
+        centerX: rect.left + rect.width / 2 - currentOffset.x,
+        centerY: rect.top + rect.height / 2 - currentOffset.y,
+      });
+    });
+  };
+
+  const setRepairableText = (node, text, showCaret = false) => {
+    const textNode = getRepairableTextNode(node);
+    if (!textNode) {
+      return;
+    }
+
+    textNode.textContent = text;
+    node.classList.toggle("is-caret-visible", showCaret);
+  };
+
+  const clearRepairableEditState = (node) => {
+    node.classList.remove("is-text-editing", "is-caret-visible");
+    const textNode = getRepairableTextNode(node);
+    if (!textNode) {
+      return;
+    }
+
+    textNode.removeAttribute("contenteditable");
+    textNode.removeAttribute("spellcheck");
+    textNode.blur();
+  };
+
+  const selectRepairable = (node) => {
+    repairableTitles.forEach((item) => item.classList.toggle("is-selected", item === node));
+    selectedRepairable = node;
+  };
+
+  const clearRepairableSelection = () => {
+    repairableTitles.forEach((item) => item.classList.remove("is-selected"));
+    selectedRepairable = null;
+  };
+
+  const positionRepairCursor = (x, y) => {
+    if (!returnCursor) {
+      return;
+    }
+
+    repairCursorVisible = true;
+    repairCursorPosition = { x, y };
+    returnCursor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    returnCursor.style.opacity = "1";
+  };
+
+  const hideRepairCursor = () => {
+    if (!returnCursor) {
+      return;
+    }
+
+    returnCursor.classList.remove("is-commenting");
+    returnCursor.classList.remove("is-prompting");
+    if (returnCursorComment) {
+      returnCursorComment.textContent = returnCursorComment.dataset.fullComment || "";
+    }
+    if (returnCursorPrompt) {
+      returnCursorPrompt.textContent = idlePrompts[0];
+    }
+    if (returnCursorLabel) {
+      returnCursorLabel.style.opacity = "1";
+    }
+    repairCursorVisible = false;
+    repairCursorPosition = { x: -9999, y: -9999 };
+    returnCursor.style.opacity = "0";
+    returnCursor.style.transform = "translate3d(-9999px, -9999px, 0)";
+  };
+
+  const clearRepairHelperTimeouts = (helperState) => {
+    if (!helperState?.timeouts) {
+      return;
+    }
+
+    helperState.timeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+    helperState.timeouts = [];
+  };
+
+  const clearRepairBotState = (node) => {
+    node.classList.remove("is-bot-hover", "is-bot-pressing");
+  };
+
+  const restoreRepairableToDefaultState = (node) => {
+    clearRepairBotState(node);
+    clearRepairableEditState(node);
+    setRepairableText(node, repairableTextMap.get(node) || getRepairableText(node));
+    node.style.minWidth = "";
+    node.style.minHeight = "";
+    setRepairableOffset(node, 0, 0);
+  };
+
+  const ensureAllRepairablesAtDefaultState = () => {
+    repairableTitles.forEach((node) => {
+      const pendingTimeout = pendingRepairTimeouts.get(node);
+      const isQueued = repairQueue.some((item) => item.node === node);
+      const isActiveNode = activeRepair?.node === node || activeRepairEdit?.node === node;
+
+      if (pendingTimeout || isQueued || isActiveNode) {
+        return;
+      }
+
+      restoreRepairableToDefaultState(node);
+    });
+  };
+
+  const getRandomEdgePoint = (targetX, targetY) => {
+    const sides = ["left", "right", "top", "bottom"];
+    const side = sides[Math.floor(Math.random() * sides.length)];
+
+    switch (side) {
+      case "left":
+        return { x: -32, y: targetY };
+      case "right":
+        return { x: window.innerWidth + 32, y: targetY };
+      case "top":
+        return { x: targetX, y: -32 };
+      default:
+        return { x: targetX, y: window.innerHeight + 32 };
+    }
+  };
+
+  const getCurveControlPoint = (startPoint, endPoint, bendScale = 0.2) => {
+    const deltaX = endPoint.x - startPoint.x;
+    const deltaY = endPoint.y - startPoint.y;
+    const distance = Math.hypot(deltaX, deltaY) || 1;
+    const midX = (startPoint.x + endPoint.x) / 2;
+    const midY = (startPoint.y + endPoint.y) / 2;
+    const normalX = -deltaY / distance;
+    const normalY = deltaX / distance;
+    const direction = Math.random() > 0.5 ? 1 : -1;
+    const bend = Math.max(36, distance * bendScale) * direction;
+
+    return {
+      x: midX + normalX * bend,
+      y: midY + normalY * bend,
+    };
+  };
+
+  const getQuadraticPoint = (startPoint, controlPoint, endPoint, progress) => {
+    const inverse = 1 - progress;
+
+    return {
+      x:
+        inverse * inverse * startPoint.x +
+        2 * inverse * progress * controlPoint.x +
+        progress * progress * endPoint.x,
+      y:
+        inverse * inverse * startPoint.y +
+        2 * inverse * progress * controlPoint.y +
+        progress * progress * endPoint.y,
+    };
+  };
+
+  const removeQueuedRepair = (node, reason = null) => {
+    for (let index = repairQueue.length - 1; index >= 0; index -= 1) {
+      const item = repairQueue[index];
+      if (item.node !== node) {
+        continue;
+      }
+
+      if (reason && item.reason !== reason) {
+        continue;
+      }
+
+      repairQueue.splice(index, 1);
+    }
+  };
+
+  const queueRepair = (node, reason) => {
+    removeQueuedRepair(node, reason);
+    repairQueue.push({ node, reason });
+    processRepairQueue();
+  };
+
+  const cancelRepairForNode = (node, { preserveMove = false } = {}) => {
+    const pendingTimeout = pendingRepairTimeouts.get(node);
+    if (pendingTimeout) {
+      if (!(preserveMove && pendingTimeout.reason === "move")) {
+        clearTimeout(pendingTimeout.id);
+        pendingRepairTimeouts.delete(node);
+      }
+    }
+
+    removeQueuedRepair(node, preserveMove ? "text" : null);
+
+    if (activeRepair && activeRepair.node === node) {
+      cancelAnimationFrame(activeRepair.frameId);
+      clearRepairHelperTimeouts(activeRepair);
+      clearRepairBotState(node);
+      clearDragGuide();
+      activeRepair = null;
+      hideRepairCursor();
+    }
+  };
+
+  const animateRepairCursorTo = (endPoint, duration, onComplete) => {
+    if (!repairCursorVisible) {
+      onComplete?.();
+      return;
+    }
+
+    const startPoint = { x: repairCursorPosition.x, y: repairCursorPosition.y };
+    const controlPoint = getCurveControlPoint(startPoint, endPoint, 0.14);
+    const startTime = performance.now();
+
+    const tick = (now) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - (1 - progress) * (1 - progress);
+      const nextPoint = getQuadraticPoint(startPoint, controlPoint, endPoint, eased);
+
+      positionRepairCursor(nextPoint.x, nextPoint.y);
+
+      if (progress < 1) {
+        if (activeRepair) {
+          activeRepair.frameId = requestAnimationFrame(tick);
+        }
+        return;
+      }
+
+      onComplete?.();
+    };
+
+    if (activeRepair) {
+      activeRepair.frameId = requestAnimationFrame(tick);
+    }
+  };
+
+  const getRepairCreatorMessage = () => {
+    const tierIndex = totalMoveCount <= 1 ? 0 : totalMoveCount <= 3 ? 1 : 2;
+    const messages = creatorMessageTiers[tierIndex];
+    return messages[Math.floor(Math.random() * messages.length)];
+  };
+
+  const getRepairEditComment = () =>
+    creatorEditComments[Math.floor(Math.random() * creatorEditComments.length)];
+
+  const resetStaleRepairState = () => {
+    if (!activeRepair || repairCursorVisible) {
+      return;
+    }
+
+    cancelAnimationFrame(activeRepair.frameId);
+    clearRepairHelperTimeouts(activeRepair);
+    clearRepairBotState(activeRepair.node);
+    clearSharedDragGuide();
+    activeRepair = null;
+    hideRepairCursor();
+  };
+
+  const finalizeRepairableEdit = (node, { revert = false } = {}) => {
+    if (!activeRepairEdit || activeRepairEdit.node !== node) {
+      return;
+    }
+
+    const { originalText, defaultText, minWidth, minHeight, centerX, centerY } = activeRepairEdit;
+    setRepairableText(node, revert ? originalText : getRepairableText(node));
+    recenterRepairableToPoint(node, centerX, centerY);
+    clearRepairableEditState(node);
+    node.style.minWidth = "";
+    node.style.minHeight = "";
+    activeRepairEdit = null;
+
+    if (revert || getRepairableText(node) === defaultText) {
+      return;
+    }
+
+    node.style.minWidth = `${minWidth}px`;
+    node.style.minHeight = `${minHeight}px`;
+
+    const timeoutId = window.setTimeout(() => {
+      pendingRepairTimeouts.delete(node);
+      queueRepair(node, "text");
+    }, 1000);
+
+    pendingRepairTimeouts.set(node, { id: timeoutId, reason: "text" });
+  };
+
+  const beginRepairableEdit = (node) => {
+    const textNode = getRepairableTextNode(node);
+    if (!textNode) {
+      return;
+    }
+
+    if (activeRepairEdit && activeRepairEdit.node !== node) {
+      finalizeRepairableEdit(activeRepairEdit.node);
+    }
+
+    cancelRepairForNode(node, { preserveMove: true });
+    selectRepairable(node);
+    node.classList.add("is-text-editing");
+    textNode.setAttribute("contenteditable", "true");
+    textNode.setAttribute("spellcheck", "false");
+    textNode.focus();
+
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(textNode);
+    range.collapse(false);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    const rect = node.getBoundingClientRect();
+    activeRepairEdit = {
+      node,
+      originalText: getRepairableText(node),
+      defaultText: repairableTextMap.get(node) || "",
+      centerX: rect.left + rect.width / 2,
+      centerY: rect.top + rect.height / 2,
+      minWidth: rect.width,
+      minHeight: rect.height,
+    };
+    node.style.minWidth = `${rect.width}px`;
+    node.style.minHeight = `${rect.height}px`;
+  };
+
+  const startMoveRepair = (node, { continueFromCurrentCursor = false } = {}) => {
+    const rect = node.getBoundingClientRect();
+    const moveSnapshot = repairMoveSnapshots.get(node);
+    const currentOffset = moveSnapshot?.offset || getRepairableOffset(node);
+    const currentCenterX = moveSnapshot?.centerX || rect.left + rect.width / 2;
+    const currentCenterY = moveSnapshot?.centerY || rect.top + rect.height / 2;
+
+    if (Math.abs(currentOffset.x) < 1 && Math.abs(currentOffset.y) < 1) {
+      repairMoveSnapshots.delete(node);
+      setRepairableOffset(node, 0, 0);
+      return false;
+    }
+
+    const startPoint =
+      continueFromCurrentCursor && repairCursorVisible
+        ? { x: repairCursorPosition.x, y: repairCursorPosition.y }
+        : getRandomEdgePoint(currentCenterX, currentCenterY);
+    const approachControl = getCurveControlPoint(
+      startPoint,
+      { x: currentCenterX, y: currentCenterY },
+      0.18
+    );
+    const helperState = { node, frameId: 0, timeouts: [] };
+
+    activeRepair = helperState;
+    positionRepairCursor(startPoint.x, startPoint.y);
+
+    const approachStart = performance.now();
+    const animateApproach = (now) => {
+      const progress = Math.min((now - approachStart) / 420, 1);
+      const eased = 1 - (1 - progress) * (1 - progress) * (1 - progress);
+      const nextPoint = getQuadraticPoint(
+        startPoint,
+        approachControl,
+        { x: currentCenterX, y: currentCenterY },
+        eased
+      );
+      positionRepairCursor(nextPoint.x, nextPoint.y);
+
+      if (progress < 1) {
+        helperState.frameId = requestAnimationFrame(animateApproach);
+        return;
+      }
+
+      node.classList.add("is-bot-hover");
+
+      const hoverTimeout = window.setTimeout(() => {
+        if (!activeRepair || activeRepair.node !== node) {
+          return;
+        }
+
+        node.classList.remove("is-bot-hover");
+        node.classList.add("is-bot-pressing");
+
+        const pressTimeout = window.setTimeout(() => {
+          if (!activeRepair || activeRepair.node !== node) {
+            return;
+          }
+
+          const originCenterX = currentCenterX - currentOffset.x;
+          const originCenterY = currentCenterY - currentOffset.y;
+          const moveStart = performance.now();
+          const moveControl = getCurveControlPoint(
+            { x: currentCenterX, y: currentCenterY },
+            { x: originCenterX, y: originCenterY },
+            0.16
+          );
+
+          const animateReturn = (moveNow) => {
+            const moveProgress = Math.min((moveNow - moveStart) / 720, 1);
+            const easedMove = 1 - (1 - moveProgress) * (1 - moveProgress);
+            const nextPoint = getQuadraticPoint(
+              { x: currentCenterX, y: currentCenterY },
+              moveControl,
+              { x: originCenterX, y: originCenterY },
+              easedMove
+            );
+
+            const nextOffsetX = nextPoint.x - originCenterX;
+            const nextOffsetY = nextPoint.y - originCenterY;
+
+            setRepairableOffset(node, nextOffsetX, nextOffsetY);
+            positionRepairCursor(nextPoint.x, nextPoint.y);
+            setSharedDragGuide(currentCenterX, currentCenterY, nextPoint.x, nextPoint.y);
+
+            if (moveProgress < 1) {
+              helperState.frameId = requestAnimationFrame(animateReturn);
+              return;
+            }
+
+            setRepairableOffset(node, 0, 0);
+            repairMoveSnapshots.delete(node);
+            selectRepairable(node);
+            clearSharedDragGuide();
+            positionRepairCursor(originCenterX, originCenterY);
+
+            const commentStartTimeout = window.setTimeout(() => {
+              if (!activeRepair || activeRepair.node !== node) {
+                return;
+              }
+
+              node.classList.remove("is-bot-pressing");
+              const fullComment = getRepairCreatorMessage();
+
+              const startTypingSequence = () => {
+                if (!activeRepair || activeRepair.node !== node || !returnCursorComment) {
+                  return;
+                }
+
+                returnCursor.classList.add("is-commenting");
+                returnCursorComment.dataset.fullComment = fullComment;
+                returnCursorComment.textContent = "...";
+
+                const indicatorTimeout = window.setTimeout(() => {
+                  if (!activeRepair || activeRepair.node !== node || !returnCursorComment) {
+                    return;
+                  }
+
+                  returnCursorComment.textContent = "";
+                  let charIndex = 0;
+
+                  const typeNextCharacter = () => {
+                    if (!activeRepair || activeRepair.node !== node || !returnCursorComment) {
+                      return;
+                    }
+
+                    charIndex += 1;
+                    returnCursorComment.textContent = fullComment.slice(0, charIndex);
+
+                    if (charIndex < fullComment.length) {
+                      const typingTimeout = window.setTimeout(typeNextCharacter, 40);
+                      helperState.timeouts.push(typingTimeout);
+                      return;
+                    }
+
+                    const holdTimeout = window.setTimeout(() => {
+                      if (!activeRepair || activeRepair.node !== node) {
+                        return;
+                      }
+
+                      returnCursor.classList.remove("is-commenting");
+                      node.classList.remove("is-bot-pressing");
+                      ensureAllRepairablesAtDefaultState();
+
+                      if (repairQueue.length > 0) {
+                        activeRepair = null;
+                        processRepairQueue();
+                        return;
+                      }
+
+                      const exitPoint = getRandomEdgePoint(originCenterX, originCenterY);
+                      const exitStartPoint = {
+                        x: repairCursorPosition.x,
+                        y: repairCursorPosition.y,
+                      };
+                      const exitControl = getCurveControlPoint(exitStartPoint, exitPoint, 0.2);
+                      const exitStart = performance.now();
+
+                      const animateExit = (exitNow) => {
+                        const exitProgress = Math.min((exitNow - exitStart) / 420, 1);
+                        const easedExit = 1 - (1 - exitProgress) * (1 - exitProgress);
+                        const nextPoint = getQuadraticPoint(
+                          exitStartPoint,
+                          exitControl,
+                          exitPoint,
+                          easedExit
+                        );
+                        positionRepairCursor(nextPoint.x, nextPoint.y);
+
+                        if (exitProgress < 1) {
+                          helperState.frameId = requestAnimationFrame(animateExit);
+                          return;
+                        }
+
+                        activeRepair = null;
+                        hideRepairCursor();
+                        processRepairQueue();
+                      };
+
+                      helperState.frameId = requestAnimationFrame(animateExit);
+                    }, 2000);
+
+                    helperState.timeouts.push(holdTimeout);
+                  };
+
+                  typeNextCharacter();
+                }, 420);
+
+                helperState.timeouts.push(indicatorTimeout);
+              };
+
+              if (returnCursorComment && returnCursorLabel) {
+                returnCursorComment.dataset.fullComment = fullComment;
+                returnCursorLabel.style.opacity = "0";
+                returnCursorComment.textContent = fullComment;
+
+                requestAnimationFrame(() => {
+                  if (!activeRepair || activeRepair.node !== node || !returnCursorLabel) {
+                    return;
+                  }
+
+                  const labelRect = returnCursorLabel.getBoundingClientRect();
+                  const viewportCenterX = window.innerWidth / 2;
+                  const labelCenterX = labelRect.left + labelRect.width / 2;
+                  const wouldOverflow =
+                    labelRect.left < 16 || labelRect.right > window.innerWidth - 16;
+
+                  if (!wouldOverflow) {
+                    returnCursorLabel.style.opacity = "1";
+                    startTypingSequence();
+                    return;
+                  }
+
+                  const targetX = repairCursorPosition.x + (viewportCenterX - labelCenterX);
+                  animateRepairCursorTo(
+                    { x: targetX, y: repairCursorPosition.y },
+                    260,
+                    () => {
+                      if (returnCursorLabel) {
+                        returnCursorLabel.style.opacity = "1";
+                      }
+                      startTypingSequence();
+                    }
+                  );
+                });
+              } else {
+                startTypingSequence();
+              }
+            }, 1000);
+
+            helperState.timeouts.push(commentStartTimeout);
+          };
+
+          helperState.frameId = requestAnimationFrame(animateReturn);
+        }, 140);
+
+        helperState.timeouts.push(pressTimeout);
+      }, 160);
+
+      helperState.timeouts.push(hoverTimeout);
+    };
+
+    helperState.frameId = requestAnimationFrame(animateApproach);
+    return true;
+  };
+
+  const startOrQueueMoveRepair = (node) => {
+    resetStaleRepairState();
+
+    if (activeRepair || activeRepairEdit || isMenuBlockingBot()) {
+      queueRepair(node, "move");
+      return;
+    }
+
+    if (!startMoveRepair(node)) {
+      repairMoveSnapshots.delete(node);
+      setRepairableOffset(node, 0, 0);
+    }
+  };
+
+  const processRepairQueue = () => {
+    resetStaleRepairState();
+
+    if (activeRepair || activeRepairEdit || repairQueue.length === 0 || isMenuBlockingBot()) {
+      return;
+    }
+
+    const { node, reason } = repairQueue.shift();
+    const currentText = getRepairableText(node);
+    const defaultText = repairableTextMap.get(node) || currentText;
+    const rect = node.getBoundingClientRect();
+    const moveSnapshot = repairMoveSnapshots.get(node);
+    const currentOffset = moveSnapshot?.offset || getRepairableOffset(node);
+    const currentCenterX = moveSnapshot?.centerX || rect.left + rect.width / 2;
+    const currentCenterY = moveSnapshot?.centerY || rect.top + rect.height / 2;
+
+    if (reason === "move") {
+      if (!startMoveRepair(node, { continueFromCurrentCursor: true })) {
+        processRepairQueue();
+      }
+      return;
+    }
+
+    if (currentText === defaultText) {
+      clearRepairableEditState(node);
+      node.style.minWidth = "";
+      node.style.minHeight = "";
+      processRepairQueue();
+      return;
+    }
+
+    const centerX = currentCenterX;
+    const centerY = currentCenterY;
+    const startPoint =
+      repairCursorVisible
+        ? { x: repairCursorPosition.x, y: repairCursorPosition.y }
+        : getRandomEdgePoint(centerX, centerY);
+    const endPoint = {
+      x: rect.left + rect.width - 10,
+      y: rect.top + rect.height / 2,
+    };
+    const approachControl = getCurveControlPoint(startPoint, endPoint, 0.18);
+    const helperState = { node, frameId: 0, timeouts: [] };
+
+    activeRepair = helperState;
+    positionRepairCursor(startPoint.x, startPoint.y);
+
+    const approachStart = performance.now();
+    const animateApproach = (now) => {
+      const progress = Math.min((now - approachStart) / 520, 1);
+      const eased = 1 - (1 - progress) * (1 - progress);
+      const nextPoint = getQuadraticPoint(startPoint, approachControl, endPoint, eased);
+      positionRepairCursor(nextPoint.x, nextPoint.y);
+
+      if (progress < 1) {
+        helperState.frameId = requestAnimationFrame(animateApproach);
+        return;
+      }
+
+      node.classList.add("is-text-editing");
+      selectRepairable(node);
+      let deleteIndex = currentText.length;
+      const origin = repairOriginMap.get(node);
+      const lockedCenterX = origin?.centerX ?? centerX;
+      const lockedCenterY = origin?.centerY ?? centerY;
+
+      const sharedPrefixLength = (() => {
+        const maxLength = Math.min(currentText.length, defaultText.length);
+        let prefixLength = 0;
+        while (
+          prefixLength < maxLength &&
+          currentText[prefixLength].toLowerCase() === defaultText[prefixLength].toLowerCase()
+        ) {
+          prefixLength += 1;
+        }
+        return prefixLength;
+      })();
+
+      node.style.minWidth = `${rect.width}px`;
+      node.style.minHeight = `${rect.height}px`;
+      setRepairableText(node, currentText, true);
+      recenterRepairableToPoint(node, lockedCenterX, lockedCenterY);
+
+      const beginRepairDelete = () => {
+        if (!activeRepair || activeRepair.node !== node) {
+          return;
+        }
+
+        const deleteNextCharacter = () => {
+          if (!activeRepair || activeRepair.node !== node) {
+            return;
+          }
+
+          deleteIndex -= 1;
+          setRepairableText(node, currentText.slice(0, deleteIndex), true);
+          recenterRepairableToPoint(node, lockedCenterX, lockedCenterY);
+
+          if (deleteIndex > sharedPrefixLength) {
+            const deleteTimeout = window.setTimeout(deleteNextCharacter, 55);
+            helperState.timeouts.push(deleteTimeout);
+            return;
+          }
+
+          let typeIndex = sharedPrefixLength;
+
+          const typeNextCharacter = () => {
+            if (!activeRepair || activeRepair.node !== node) {
+              return;
+            }
+
+            typeIndex += 1;
+            setRepairableText(node, defaultText.slice(0, typeIndex), true);
+            recenterRepairableToPoint(node, lockedCenterX, lockedCenterY);
+
+            if (typeIndex < defaultText.length) {
+              const typeTimeout = window.setTimeout(typeNextCharacter, 88);
+              helperState.timeouts.push(typeTimeout);
+              return;
+            }
+
+            clearRepairableEditState(node);
+            setRepairableText(node, defaultText);
+            recenterRepairableToPoint(node, lockedCenterX, lockedCenterY);
+            node.style.minWidth = "";
+            node.style.minHeight = "";
+
+            const commentStartTimeout = window.setTimeout(() => {
+              if (!activeRepair || activeRepair.node !== node) {
+                return;
+              }
+
+              returnCursor.classList.add("is-commenting");
+              const fullComment = getRepairEditComment();
+              returnCursorComment.dataset.fullComment = fullComment;
+              returnCursorComment.textContent = "";
+              let commentIndex = 0;
+
+              const typeComment = () => {
+                if (!activeRepair || activeRepair.node !== node) {
+                  return;
+                }
+
+                commentIndex += 1;
+                returnCursorComment.textContent = fullComment.slice(0, commentIndex);
+
+                if (commentIndex < fullComment.length) {
+                  const commentTimeout = window.setTimeout(typeComment, 28);
+                  helperState.timeouts.push(commentTimeout);
+                  return;
+                }
+
+                const holdTimeout = window.setTimeout(() => {
+                  if (!activeRepair || activeRepair.node !== node) {
+                    return;
+                  }
+
+                  returnCursor.classList.remove("is-commenting");
+                  ensureAllRepairablesAtDefaultState();
+
+                  if (repairQueue.length > 0) {
+                    activeRepair = null;
+                    processRepairQueue();
+                    return;
+                  }
+
+                  const exitPoint = getRandomEdgePoint(centerX, centerY);
+                  const exitStartPoint = { x: repairCursorPosition.x, y: repairCursorPosition.y };
+                  const exitControl = getCurveControlPoint(exitStartPoint, exitPoint, 0.2);
+                  const exitStart = performance.now();
+
+                  const animateExit = (exitNow) => {
+                    const exitProgress = Math.min((exitNow - exitStart) / 520, 1);
+                    const easedExit = 1 - (1 - exitProgress) * (1 - exitProgress);
+                    const nextPoint = getQuadraticPoint(
+                      exitStartPoint,
+                      exitControl,
+                      exitPoint,
+                      easedExit
+                    );
+                    positionRepairCursor(nextPoint.x, nextPoint.y);
+
+                    if (exitProgress < 1) {
+                      helperState.frameId = requestAnimationFrame(animateExit);
+                      return;
+                    }
+
+                    activeRepair = null;
+                    hideRepairCursor();
+                    processRepairQueue();
+                  };
+
+                  helperState.frameId = requestAnimationFrame(animateExit);
+                }, 2000);
+
+                helperState.timeouts.push(holdTimeout);
+              };
+
+              typeComment();
+            }, 500);
+
+            helperState.timeouts.push(commentStartTimeout);
+          };
+
+          const typeStartTimeout = window.setTimeout(typeNextCharacter, 280);
+          helperState.timeouts.push(typeStartTimeout);
+        };
+
+        const deleteStartTimeout = window.setTimeout(deleteNextCharacter, 280);
+        helperState.timeouts.push(deleteStartTimeout);
+      };
+
+      node.classList.add("is-bot-hover", "is-bot-pressing");
+
+      const releaseFirstClick = window.setTimeout(() => {
+        node.classList.remove("is-bot-pressing");
+      }, 70);
+
+      const startSecondClick = window.setTimeout(() => {
+        if (!activeRepair || activeRepair.node !== node) {
+          return;
+        }
+
+        node.classList.add("is-bot-pressing");
+      }, 130);
+
+      const finishDoubleClick = window.setTimeout(() => {
+        if (!activeRepair || activeRepair.node !== node) {
+          return;
+        }
+
+        clearRepairBotState(node);
+        beginRepairDelete();
+      }, 210);
+
+      helperState.timeouts.push(releaseFirstClick, startSecondClick, finishDoubleClick);
+    };
+
+    helperState.frameId = requestAnimationFrame(animateApproach);
+  };
+
+    repairableTitles.forEach((node) => {
+    const textNode = getRepairableTextNode(node);
+
+    textNode?.addEventListener("blur", () => {
+      if (activeRepairEdit?.node === node) {
+        finalizeRepairableEdit(node);
+      }
+    });
+
+    textNode?.addEventListener("keydown", (event) => {
+      if (activeRepairEdit?.node !== node) {
+        return;
+      }
+
+      if (event.key === "Enter") {
+        event.preventDefault();
+        finalizeRepairableEdit(node);
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        finalizeRepairableEdit(node, { revert: true });
+      }
+    });
+
+    textNode?.addEventListener("input", () => {
+      if (activeRepairEdit?.node !== node) {
+        return;
+      }
+
+      recenterRepairableToPoint(node, activeRepairEdit.centerX, activeRepairEdit.centerY);
+    });
+
+    node.addEventListener("dblclick", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      beginRepairableEdit(node);
+    });
+
+    node.addEventListener("pointerdown", (event) => {
+      if (activeRepairEdit?.node === node) {
+        return;
+      }
+
+      if (activeRepairEdit && activeRepairEdit.node !== node) {
+        finalizeRepairableEdit(activeRepairEdit.node);
+      }
+
+      event.stopPropagation();
+      event.preventDefault();
+      selectRepairable(node);
+      cancelRepairForNode(node);
+      node.classList.add("is-pressing");
+
+      const rect = node.getBoundingClientRect();
+      const pointerId = event.pointerId;
+      const startClientX = event.clientX;
+      const startClientY = event.clientY;
+      const startOffset = getRepairableOffset(node);
+      const startCenterX = rect.left + rect.width / 2;
+      const startCenterY = rect.top + rect.height / 2;
+      const moveThreshold = coarsePointer ? 8 : 3;
+      let dragStarted = false;
+      let didMove = false;
+      let longPressTriggered = false;
+      let longPressTimeoutId = 0;
+      let gestureEnded = false;
+
+      const startDrag = () => {
+        if (dragStarted || longPressTriggered) {
+          return;
+        }
+
+        dragStarted = true;
+        node.classList.remove("is-pressing");
+        node.classList.add("is-dragging");
+      };
+
+      if (coarsePointer) {
+        longPressTimeoutId = window.setTimeout(() => {
+          longPressTriggered = true;
+          node.classList.remove("is-pressing");
+          cleanupTitleListeners();
+          beginRepairableEdit(node);
+        }, LONG_PRESS_EDIT_DELAY_MS);
+      }
+
+      const moveTitle = (moveEvent) => {
+        if (gestureEnded || moveEvent.pointerId !== pointerId || longPressTriggered) {
+          return;
+        }
+
+        const deltaX = moveEvent.clientX - startClientX;
+        const deltaY = moveEvent.clientY - startClientY;
+        const travelDistance = Math.hypot(deltaX, deltaY);
+
+        if (!dragStarted) {
+          if (travelDistance < moveThreshold) {
+            return;
+          }
+
+          if (longPressTimeoutId) {
+            clearTimeout(longPressTimeoutId);
+            longPressTimeoutId = 0;
+          }
+
+          startDrag();
+        }
+
+        didMove = true;
+        const nextOffsetX = startOffset.x + deltaX;
+        const nextOffsetY = startOffset.y + deltaY;
+        setRepairableOffset(node, nextOffsetX, nextOffsetY);
+        setSharedDragGuide(
+          startCenterX,
+          startCenterY,
+          startCenterX + deltaX,
+          startCenterY + deltaY
+        );
+      };
+
+      const cleanupTitleListeners = () => {
+        window.removeEventListener("pointermove", moveTitle);
+        window.removeEventListener("pointerup", endGesture);
+        window.removeEventListener("pointercancel", endGesture);
+        window.removeEventListener("mouseup", endGesture);
+        window.removeEventListener("touchend", endGesture);
+      };
+
+      const endGesture = (endEvent) => {
+        if (gestureEnded) {
+          return;
+        }
+
+        const isPointerEvent =
+          typeof PointerEvent !== "undefined" && endEvent instanceof PointerEvent;
+        if (isPointerEvent && endEvent.pointerId !== pointerId) {
+          return;
+        }
+
+        gestureEnded = true;
+
+        if (longPressTimeoutId) {
+          clearTimeout(longPressTimeoutId);
+          longPressTimeoutId = 0;
+        }
+
+        cleanupTitleListeners();
+
+        if (longPressTriggered) {
+          node.classList.remove("is-pressing");
+          return;
+        }
+
+        if (!dragStarted) {
+          node.classList.remove("is-pressing");
+          clearSharedDragGuide();
+          return;
+        }
+
+        node.classList.remove("is-pressing");
+        node.classList.remove("is-dragging");
+        clearSharedDragGuide();
+
+        if (!didMove) {
+          return;
+        }
+
+        const currentOffset = getRepairableOffset(node);
+        const currentRect = node.getBoundingClientRect();
+        if (Math.abs(currentOffset.x) < 1 && Math.abs(currentOffset.y) < 1) {
+          setRepairableOffset(node, 0, 0);
+          return;
+        }
+
+        totalMoveCount += 1;
+        repairMoveSnapshots.set(node, {
+          offset: { x: currentOffset.x, y: currentOffset.y },
+          centerX: currentRect.left + currentRect.width / 2,
+          centerY: currentRect.top + currentRect.height / 2,
+        });
+
+        const timeoutId = window.setTimeout(() => {
+          pendingRepairTimeouts.delete(node);
+          startOrQueueMoveRepair(node);
+        }, 1000);
+
+        pendingRepairTimeouts.set(node, { id: timeoutId, reason: "move" });
+      };
+
+      window.addEventListener("pointermove", moveTitle);
+      window.addEventListener("pointerup", endGesture);
+      window.addEventListener("pointercancel", endGesture);
+      window.addEventListener("mouseup", endGesture);
+      window.addEventListener("touchend", endGesture);
+    });
+  });
+
+  document.addEventListener("pointerdown", (event) => {
+    if (activeRepairEdit && !event.target.closest(".repairable-title")) {
+      finalizeRepairableEdit(activeRepairEdit.node);
+    }
+
+    if (
+      isBlankCanvasTarget(event.target) &&
+      !event.target.closest("a, button, .repairable-title, .top-menu, .top-menu-toggle")
+    ) {
+      showBlankSelectionBox(event.clientX, event.clientY);
+    } else {
+      hideBlankSelectionBox();
+    }
+
+    if (!event.target.closest(".repairable-title")) {
+      clearRepairableSelection();
+    }
+  });
+
+  updateRepairableOrigins();
+  window.addEventListener("resize", updateRepairableOrigins);
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(updateRepairableOrigins);
+  }
 }

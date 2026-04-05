@@ -32,10 +32,37 @@
       <a class="top-menu-link" href="./case-studies.html">Case Studies</a>
       <a class="top-menu-link" href="./resume.html">Resume</a>
     </nav>
+    <svg class="drag-guide" aria-hidden="true">
+      <line class="drag-guide-line" x1="0" y1="0" x2="0" y2="0"></line>
+    </svg>
+    <div class="drag-guide-label" aria-hidden="true">
+      <span class="drag-guide-text">dx: 0,  dy: 0</span>
+    </div>
     <main class="page-shell">
       <section class="page-panel" aria-label="Passion Projects">
         <p class="page-kicker">Passion Projects</p>
-        <h1 class="page-heading">Ideas I Keep Building</h1>
+        <h1
+          class="page-heading repairable-title"
+          data-repairable-title="passion-projects-page-title"
+        >
+          <span class="repairable-text-content">Ideas I Keep Building</span>
+          <span
+            class="interactive-corner interactive-corner-top-left text-edit-corner"
+            aria-hidden="true"
+          ></span>
+          <span
+            class="interactive-corner interactive-corner-top-right text-edit-corner"
+            aria-hidden="true"
+          ></span>
+          <span
+            class="interactive-corner interactive-corner-bottom-left text-edit-corner"
+            aria-hidden="true"
+          ></span>
+          <span
+            class="interactive-corner interactive-corner-bottom-right text-edit-corner"
+            aria-hidden="true"
+          ></span>
+        </h1>
         <p class="page-copy">
           A landing page for side quests, experiments, and self-initiated work. It gives your
           passion projects a home without making them compete with the main portfolio canvas.
@@ -158,6 +185,6 @@
         <span class="return-cursor-prompt"></span>
       </span>
     </div>
-    <script src="./script.js"></script>
+    <script src="./script.js?v=6"></script>
   </body>
 </html>

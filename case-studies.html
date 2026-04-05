@@ -32,10 +32,37 @@
       <a class="top-menu-link is-active" href="./case-studies.html">Case Studies</a>
       <a class="top-menu-link" href="./resume.html">Resume</a>
     </nav>
+    <svg class="drag-guide" aria-hidden="true">
+      <line class="drag-guide-line" x1="0" y1="0" x2="0" y2="0"></line>
+    </svg>
+    <div class="drag-guide-label" aria-hidden="true">
+      <span class="drag-guide-text">dx: 0,  dy: 0</span>
+    </div>
     <main class="page-shell">
       <section class="page-panel" aria-label="Case Studies">
         <p class="page-kicker">Case Studies</p>
-        <h1 class="page-heading">Stories Behind The Work</h1>
+        <h1
+          class="page-heading repairable-title"
+          data-repairable-title="case-studies-page-title"
+        >
+          <span class="repairable-text-content">Stories Behind The Work</span>
+          <span
+            class="interactive-corner interactive-corner-top-left text-edit-corner"
+            aria-hidden="true"
+          ></span>
+          <span
+            class="interactive-corner interactive-corner-top-right text-edit-corner"
+            aria-hidden="true"
+          ></span>
+          <span
+            class="interactive-corner interactive-corner-bottom-left text-edit-corner"
+            aria-hidden="true"
+          ></span>
+          <span
+            class="interactive-corner interactive-corner-bottom-right text-edit-corner"
+            aria-hidden="true"
+          ></span>
+        </h1>
         <p class="page-copy">
           A landing page for deeper project narratives. This can grow into individual case study
           entries, process breakdowns, and outcomes once you’re ready to populate them.
@@ -158,6 +185,6 @@
         <span class="return-cursor-prompt"></span>
       </span>
     </div>
-    <script src="./script.js"></script>
+    <script src="./script.js?v=6"></script>
   </body>
 </html>

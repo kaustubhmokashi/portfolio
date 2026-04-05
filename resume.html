@@ -32,10 +32,37 @@
       <a class="top-menu-link" href="./case-studies.html">Case Studies</a>
       <a class="top-menu-link is-active" href="./resume.html">Resume</a>
     </nav>
+    <svg class="drag-guide" aria-hidden="true">
+      <line class="drag-guide-line" x1="0" y1="0" x2="0" y2="0"></line>
+    </svg>
+    <div class="drag-guide-label" aria-hidden="true">
+      <span class="drag-guide-text">dx: 0,  dy: 0</span>
+    </div>
     <main class="page-shell">
       <section class="page-panel" aria-label="Resume">
         <p class="page-kicker">Resume</p>
-        <h1 class="page-heading">Experience At A Glance</h1>
+        <h1
+          class="page-heading repairable-title"
+          data-repairable-title="resume-page-title"
+        >
+          <span class="repairable-text-content">Experience At A Glance</span>
+          <span
+            class="interactive-corner interactive-corner-top-left text-edit-corner"
+            aria-hidden="true"
+          ></span>
+          <span
+            class="interactive-corner interactive-corner-top-right text-edit-corner"
+            aria-hidden="true"
+          ></span>
+          <span
+            class="interactive-corner interactive-corner-bottom-left text-edit-corner"
+            aria-hidden="true"
+          ></span>
+          <span
+            class="interactive-corner interactive-corner-bottom-right text-edit-corner"
+            aria-hidden="true"
+          ></span>
+        </h1>
         <p class="page-copy">
           A clean landing page for your resume, work history, and key credentials. We can turn this
           into a fuller resume layout or a downloadable profile in the next pass.
@@ -158,6 +185,6 @@
         <span class="return-cursor-prompt"></span>
       </span>
     </div>
-    <script src="./script.js"></script>
+    <script src="./script.js?v=6"></script>
   </body>
 </html>
