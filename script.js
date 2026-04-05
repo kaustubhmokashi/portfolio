@@ -134,6 +134,29 @@ const dragGuideLine = document.querySelector(".drag-guide-line");
 const dragGuideLabel = document.querySelector(".drag-guide-label");
 const dragGuideText = document.querySelector(".drag-guide-text");
 const isMenuBlockingBot = () => coarsePointer && document.body.classList.contains("menu-open");
+const blankSelectionBox = document.createElement("div");
+blankSelectionBox.className = "blank-selection-box";
+document.body.append(blankSelectionBox);
+
+const isBlankCanvasTarget = (target) =>
+  target === document.body ||
+  target === document.documentElement ||
+  target.closest(".hero-nameplate") === stage ||
+  target.classList?.contains("page-shell");
+
+const showBlankSelectionBox = (x, y) => {
+  const boxSize = 50;
+  const left = Math.min(Math.max(x - boxSize / 2, 0), window.innerWidth - boxSize);
+  const top = Math.min(Math.max(y - boxSize / 2, 0), window.innerHeight - boxSize);
+
+  blankSelectionBox.style.transform = `translate3d(${left}px, ${top}px, 0)`;
+  blankSelectionBox.style.opacity = "1";
+};
+
+const hideBlankSelectionBox = () => {
+  blankSelectionBox.style.opacity = "0";
+  blankSelectionBox.style.transform = "translate3d(-9999px, -9999px, 0)";
+};
 
 if (topMenu && topMenuToggle) {
   const closeMenu = () => {
@@ -1684,6 +1707,12 @@ if (stage && draggableItems.length) {
   document.addEventListener("pointerdown", (event) => {
     if (activeTextEdit && !event.target.closest(".draggable-item")) {
       finalizeTextEdit(activeTextEdit.node);
+    }
+
+    if (isBlankCanvasTarget(event.target)) {
+      showBlankSelectionBox(event.clientX, event.clientY);
+    } else {
+      hideBlankSelectionBox();
     }
 
     if (!event.target.closest(".draggable-item")) {
