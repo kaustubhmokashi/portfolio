@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="../styles.css?v=16" />
   </head>
   <body class="page-live">
-    <a class="site-title site-title-link" href="../index.html">KAUSTUBH MOKASHI</a>
+    <a class="site-title site-title-link" href="https://www.kaustubhmokashi.com">KAUSTUBH MOKASHI</a>
     <button
       class="top-menu-toggle"
       type="button"
@@ -86,66 +86,105 @@
           <div class="case-study-section">
             <p class="product-block-kicker">Why</p>
             <p class="product-body-copy">
-              Researchers were collecting papers across multiple tools, but had no single place to
-              turn those files into reusable citations. Exporting references for different formats
-              and keeping them synced with reference managers created fragmented workflows and
-              repeated manual work.
+              The Paperpal Reference Library began as a friction story. Academics and researchers
+              already had files scattered across folders, email attachments, and reference managers,
+              but the act of transforming those files into structured citations was still manual and
+              slow. The same paper might be uploaded to multiple tools, re-labeled repeatedly, and
+              exported into different citation formats depending on where the work would finally be
+              submitted. Each handoff created another chance for data to drift: author order got
+              shuffled, publication metadata went missing, and citations were misaligned between
+              what lived in a library and what showed up inside a draft.
+            </p>
+            <p class="product-body-copy">
+              The problem wasn’t just “no library.” It was the hidden cost of repetition. People
+              were wasting time rebuilding reference lists, fixing formatting quirks, and manually
+              syncing their libraries between tools like Zotero, Word, and Google Docs. Those fixes
+              were invisible to the end reader but extremely visible to the researcher who had to
+              keep their sources correct. The goal for this project was to remove that hidden cost:
+              to make references feel like a <strong class="case-study-accent">stable asset</strong>
+              that moves with the researcher across tools, not an artifact that needs constant
+              rework.
             </p>
             <ul class="case-study-list">
-              <li>Uploading papers did not automatically produce structured references.</li>
-              <li>Export formats like BibTeX and RIS required manual cleanup.</li>
-              <li>Reference managers (e.g., Zotero) fell out of sync with the library.</li>
-              <li>Citations couldn’t be reused consistently across Paperpal, ChatPDF, Word, and Docs.</li>
+              <li>Uploaded papers did not reliably auto-generate structured references.</li>
+              <li>Export formats like BibTeX and RIS required manual cleanup and reordering.</li>
+              <li>Reference managers fell out of sync when edits happened in other tools.</li>
+              <li>Citations were hard to reuse across Paperpal, ChatPDF, Word, and Docs.</li>
             </ul>
             <p class="product-body-copy">
-              Goal: make reference creation, export, and reuse feel like one continuous flow rather
-              than a set of disconnected steps.
+              The target outcome was to make reference creation, export, and reuse feel like a
+              <strong class="case-study-accent">single continuous flow</strong> instead of a set of
+              disconnected tasks. That meant designing a library that treated references as a living
+              system: a place where files, metadata, and citations stay tied together and can travel
+              with the researcher wherever the writing happens.
             </p>
           </div>
           <div class="case-study-section">
             <p class="product-block-kicker">What</p>
             <p class="product-body-copy">
-              Research mapped how academics store and reuse references across tools. The key
-              outcome was a unified library that converts uploads into references, supports
-              multiple export formats, and keeps external sync reliable.
+              The discovery phase focused on observing how researchers actually manage sources. We
+              reviewed competitor workflows, audited the strongest and weakest points of existing
+              reference managers, and tested how citations were used across Paperpal, ChatPDF, and
+              writing surfaces. The key insight was that researchers don’t want a new place to store
+              files; they want a <strong class="case-study-accent">trusted reference spine</strong>
+              that keeps files, citations, and formats in agreement across every surface.
+            </p>
+            <p class="product-body-copy">
+              That insight turned into a concrete set of outcomes. The library needed to be an
+              ingestion engine that converts uploads into clean references automatically. It had to
+              support multiple export formats and make those formats feel native, not like add‑ons.
+              And it needed to stay in sync with external systems such as Zotero without forcing the
+              user to choose a “main” reference manager. Most importantly, citations pulled from the
+              library had to stay <strong class="case-study-accent">consistent across every surface</strong>.
             </p>
             <ul class="case-study-list">
               <li>Auto-generate structured references from uploaded files.</li>
-              <li>Enable exports in BibTeX, RIS, and other citation formats.</li>
-              <li>Sync references and files with Zotero.</li>
+              <li>Enable exports in BibTeX, RIS, and other standard citation formats.</li>
+              <li>Sync references and files with Zotero as a first‑class action.</li>
               <li>Surface library citations across Paperpal, ChatPDF, Word, and Docs.</li>
+              <li>Make corrections and edits propagate back to the reference record.</li>
             </ul>
+            <p class="product-body-copy">
+              This phase also shaped the language of the system. We intentionally framed the library
+              as a “reference workspace” rather than a static file shelf. The vocabulary—sources,
+              citations, export, sync—was chosen to align with how academics already think about
+              their work, which made the feature feel familiar even though the workflows were being
+              rebuilt from scratch.
+            </p>
           </div>
           <div class="case-study-section">
             <p class="product-block-kicker">Competitor Analysis</p>
             <p class="product-body-copy">
-              We reviewed adjacent reference managers and research tools to understand how they
-              handle ingestion, citation exports, and sync. The analysis highlighted gaps in
-              automated reference creation and consistency across tools, which informed the
-              reference library’s export and sync priorities.
+              Competitor review clarified where people were already comfortable and where the pain
+              lived. Most tools handled bulk storage and citation export, but they treated sync and
+              multi‑surface reuse as secondary. We cataloged how each tool dealt with ingestion,
+              metadata correction, and export workflows, then mapped gaps around cross‑tool continuity.
+              The most frequent failure points were
+              <strong class="case-study-accent">inconsistent metadata parsing</strong> and the lack of a
+              clear “source of truth” across tools.
             </p>
             <div class="case-study-gallery case-study-gallery-compact">
               <figure class="case-study-figure">
                 <img
-                  src="../assets/case-studies/extracted/competitor-analysis/img-01-001.jpg"
+                  src="../assets/case-studies/paperpal/Dashboard%20design/Competitor%20Analysis/image%201.jpg"
                   alt="Competitor analysis snapshot 1"
                 />
               </figure>
               <figure class="case-study-figure">
                 <img
-                  src="../assets/case-studies/extracted/competitor-analysis/img-01-002.jpg"
+                  src="../assets/case-studies/paperpal/Dashboard%20design/Competitor%20Analysis/image%202.jpg"
                   alt="Competitor analysis snapshot 2"
                 />
               </figure>
               <figure class="case-study-figure">
                 <img
-                  src="../assets/case-studies/extracted/competitor-analysis/img-01-003.jpg"
+                  src="../assets/case-studies/paperpal/Dashboard%20design/Competitor%20Analysis/image%203.jpg"
                   alt="Competitor analysis snapshot 3"
                 />
               </figure>
               <figure class="case-study-figure">
                 <img
-                  src="../assets/case-studies/extracted/competitor-analysis/img-01-004.jpg"
+                  src="../assets/case-studies/paperpal/Dashboard%20design/Competitor%20Analysis/image%204.jpg"
                   alt="Competitor analysis snapshot 4"
                 />
               </figure>
@@ -154,85 +193,83 @@
           <div class="case-study-section">
             <p class="product-block-kicker">How</p>
             <p class="product-body-copy">
-              The solution focuses on three moments: ingestion, reference editing, and reuse. We
-              built clear status states for parsing, a review/edit pass for reference accuracy,
-              and a unified export/sync layer to keep external tools updated.
+              We structured the solution around three moments:
+              <strong class="case-study-accent">ingestion</strong>,
+              <strong class="case-study-accent">reference editing</strong>, and
+              <strong class="case-study-accent">reuse</strong>. Ingestion needed to feel immediate and
+              dependable, so the upload flow shows parsing states, file type recognition, and
+              conversion feedback. Reference editing is built as a “review pass,” not a separate mode,
+              so users can correct authors, titles, and publication details directly inside the
+              library without losing context. Finally, reuse is treated as a distribution layer:
+              export, sync, and citation access live in a single control zone so the output is always
+              tied to the source.
+            </p>
+            <p class="product-body-copy">
+              The dashboard is designed as the home for this loop. The left navigation organizes
+              sources and filters without hiding the act of creation. The center area is optimized
+              for scanning references at scale, while the right rail becomes the action surface for
+              export, sync, and citation tools. This layout keeps the library visually stable even
+              when different file types are being uploaded, while giving researchers clear signals
+              about what’s ready, what needs review, and what’s already synced.
             </p>
             <ul class="case-study-list">
               <li>Upload → parse → reference creation with progress states.</li>
               <li>Editable reference cards to fix metadata and author order.</li>
-              <li>Export formats and Zotero sync from a single action panel.</li>
+              <li>Export formats and Zotero sync from a unified action panel.</li>
               <li>Consistent citation picker used across Paperpal, ChatPDF, and Docs.</li>
+              <li>Library filters for file type, status, and collection.</li>
             </ul>
           </div>
           <div class="case-study-section">
-            <p class="product-block-kicker">Screens & Files</p>
-            <ul class="case-study-list">
-              <li>Reference library dashboard (upload + status states)</li>
-              <li>Reference detail view (edit + export)</li>
-              <li>Zotero sync flow</li>
-            </ul>
+            <p class="product-block-kicker">User Flows</p>
             <p class="product-body-copy">
-              Design file: add link once you’re ready to share.
+              The key flows cover three sequences:
+              <strong class="case-study-accent">add sources</strong>,
+              <strong class="case-study-accent">verify references</strong>, and
+              <strong class="case-study-accent">export or sync</strong>. The flow screens below show how
+              a single upload becomes a stable reference set and then reappears inside the writing
+              experience as a reusable citation.
             </p>
             <div class="case-study-gallery">
               <figure class="case-study-figure">
                 <img
-                  src="../assets/case-studies/extracted/user-flows/img-01-001.jpg"
+                  src="../assets/case-studies/paperpal/Dashboard%20design/User%20Flow%20screens/Empty-1.jpg"
                   alt="User flow screen 1"
                 />
-                <figcaption>User flows</figcaption>
+                <figcaption>User flow</figcaption>
               </figure>
               <figure class="case-study-figure">
                 <img
-                  src="../assets/case-studies/extracted/user-flows/img-01-002.jpg"
+                  src="../assets/case-studies/paperpal/Dashboard%20design/User%20Flow%20screens/Empty-2.jpg"
                   alt="User flow screen 2"
                 />
-                <figcaption>User flows</figcaption>
+                <figcaption>User flow</figcaption>
               </figure>
               <figure class="case-study-figure">
                 <img
-                  src="../assets/case-studies/extracted/user-flows/img-01-003.jpg"
+                  src="../assets/case-studies/paperpal/Dashboard%20design/User%20Flow%20screens/Empty-3.jpg"
                   alt="User flow screen 3"
                 />
-                <figcaption>User flows</figcaption>
+                <figcaption>User flow</figcaption>
               </figure>
               <figure class="case-study-figure">
                 <img
-                  src="../assets/case-studies/extracted/user-flows/img-01-004.jpg"
+                  src="../assets/case-studies/paperpal/Dashboard%20design/User%20Flow%20screens/Empty-4.jpg"
                   alt="User flow screen 4"
                 />
-                <figcaption>User flows</figcaption>
-              </figure>
-              <figure class="case-study-figure">
-                <img
-                  src="../assets/case-studies/extracted/components/img-01-001.jpg"
-                  alt="Reference library component 1"
-                />
-                <figcaption>Components</figcaption>
-              </figure>
-              <figure class="case-study-figure">
-                <img
-                  src="../assets/case-studies/extracted/components/img-01-002.jpg"
-                  alt="Reference library component 2"
-                />
-                <figcaption>Components</figcaption>
-              </figure>
-              <figure class="case-study-figure">
-                <img
-                  src="../assets/case-studies/extracted/components/img-01-003.jpg"
-                  alt="Reference library component 3"
-                />
-                <figcaption>Components</figcaption>
-              </figure>
-              <figure class="case-study-figure">
-                <img
-                  src="../assets/case-studies/extracted/components/img-01-004.jpg"
-                  alt="Reference library component 4"
-                />
-                <figcaption>Components</figcaption>
+                <figcaption>User flow</figcaption>
               </figure>
             </div>
+          </div>
+          <div class="case-study-section">
+            <p class="product-block-kicker">Outcome & Next Steps</p>
+            <p class="product-body-copy">
+              The reference library establishes a consistent foundation for citation work across the
+              Paperpal ecosystem. The next layer is to expand collaboration signals (shared collections,
+              team ownership, and version history) while refining automated extraction accuracy for
+              multi‑author and multi‑volume publications. As the system scales, the goal is to make
+              references feel as reliable as the documents they were derived from.
+            </p>
           </div>
         </div>
       </section>
