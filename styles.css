@@ -13,16 +13,77 @@ body {
   overflow: hidden;
 }
 
-.corner-frame {
+.corner-frame-link {
   position: fixed;
   left: 32px;
   bottom: 32px;
-  width: 92px;
-  height: 131.42px;
-  object-fit: contain;
-  pointer-events: none;
+  width: 76px;
+  aspect-ratio: 76 / 123;
+  display: block;
   user-select: none;
   z-index: 10;
+  opacity: 0;
+  animation: site-title-fade-in 420ms ease forwards;
+  animation-delay: 1.02s;
+}
+
+.corner-frame {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+a[href]::after,
+button::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 0.5px solid transparent;
+  pointer-events: none;
+}
+
+a[href]:hover::after,
+a[href]:focus-visible::after,
+button:hover::after,
+button:focus-visible::after {
+  border-color: #29a146;
+}
+
+.interactive-corner {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #ececec;
+  border: 0.5px solid #29a146;
+  box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.interactive-corner-top-left {
+  top: -6px;
+  left: -6px;
+}
+
+.interactive-corner-top-right {
+  top: -6px;
+  right: -6px;
+}
+
+.interactive-corner-bottom-left {
+  bottom: -6px;
+  left: -6px;
+}
+
+.interactive-corner-bottom-right {
+  right: -6px;
+  bottom: -6px;
+}
+
+.corner-frame-link:hover .interactive-corner,
+.corner-frame-link:focus-visible .interactive-corner {
+  opacity: 1;
 }
 
 html,
@@ -147,9 +208,12 @@ body *::after {
 }
 
 .caption-layer {
-  font-size: clamp(15px, 1.7vw, 20px);
+  font-size: clamp(12px, 1.8vw, 16px);
   font-weight: 300;
-  line-height: clamp(19px, 2vw, 24px);
+  line-height: clamp(16px, 1.9vw, 20px);
+  font-family: "Inter", sans-serif;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
 }
 
 .draggable-item::after {
@@ -415,16 +479,18 @@ body *::after {
   }
 
   .caption-layer {
-    font-size: clamp(14px, 4.2vw, 18px);
-    line-height: clamp(18px, 5vw, 22px);
+    max-width: calc(100vw - 64px);
+    padding-inline: 32px;
+    font-size: clamp(7px, 2vw, 10px);
+    line-height: clamp(11px, 3vw, 14px);
+    white-space: nowrap;
   }
 
-  .corner-frame {
-    left: 50%;
-    bottom: 24px;
-    width: min(92px, 24vw);
-    height: auto;
-    transform: translateX(-50%);
+  .corner-frame-link {
+    left: 32px;
+    bottom: 32px;
+    width: min(76px, 24vw);
+    transform: none;
   }
 }
 
@@ -437,8 +503,17 @@ body *::after {
     letter-spacing: 0.45em;
   }
 
-  .corner-frame {
-    width: min(84px, 28vw);
-    bottom: 20px;
+  .corner-frame-link {
+    width: min(72px, 28vw);
+    left: 32px;
+    bottom: 32px;
+  }
+
+  .caption-layer {
+    max-width: calc(100vw - 64px);
+    padding-inline: 32px;
+    font-size: clamp(6px, 1.6vw, 8px);
+    line-height: clamp(10px, 2.4vw, 12px);
+    white-space: nowrap;
   }
 }

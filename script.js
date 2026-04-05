@@ -79,6 +79,7 @@ const idlePrompts = [
   "Give it a little nudge.",
   "Try touching the layout.",
 ];
+const IDLE_PROMPT_DELAY_MS = 30000;
 const draggableItems = [...document.querySelectorAll(".draggable-item")];
 
 if (cursor && finePointer) {
@@ -112,7 +113,7 @@ if (stage && draggableItems.length) {
   let hasUserMovedName = false;
   let totalMoveCount = 0;
   let idleTimerId = 0;
-  let idleDelayMs = 5000;
+  let idleDelayMs = IDLE_PROMPT_DELAY_MS;
   let isIdlePromptRunning = false;
   let returnCursorVisible = false;
   let returnCursorPosition = { x: -9999, y: -9999 };
@@ -149,6 +150,7 @@ if (stage && draggableItems.length) {
       return;
     }
 
+    const captionOffset = Math.max(14, Math.min(24, window.innerWidth * 0.02));
     const stageWidth = window.innerWidth;
     const stageHeight = window.innerHeight;
     const firstRect = firstName.getBoundingClientRect();
@@ -168,7 +170,7 @@ if (stage && draggableItems.length) {
     roleLayer.style.left = `${firstLeft + firstRect.width / 2 - roleRect.width / 2}px`;
     roleLayer.style.top = `${top - 43 - roleRect.height}px`;
     captionLayer.style.left = `${secondLeft + secondRect.width / 2 - captionRect.width / 2}px`;
-    captionLayer.style.top = `${secondTop + secondRect.height + 4}px`;
+    captionLayer.style.top = `${secondTop + secondRect.height + captionOffset}px`;
     originMap.set(firstName, {
       left: firstLeft,
       top,
@@ -183,7 +185,7 @@ if (stage && draggableItems.length) {
     });
     originMap.set(captionLayer, {
       left: secondLeft + secondRect.width / 2 - captionRect.width / 2,
-      top: secondTop + secondRect.height + 4,
+      top: secondTop + secondRect.height + captionOffset,
     });
   };
 
@@ -536,7 +538,7 @@ if (stage && draggableItems.length) {
       activeReturn = null;
       isIdlePromptRunning = false;
       hideReturnCursor();
-      idleDelayMs *= 2;
+      idleDelayMs = IDLE_PROMPT_DELAY_MS;
       scheduleIdlePrompt();
     };
 
@@ -901,7 +903,7 @@ if (stage && draggableItems.length) {
   draggableItems.forEach((node) => {
     node.addEventListener("pointerdown", (event) => {
       event.stopPropagation();
-      idleDelayMs = 5000;
+      idleDelayMs = IDLE_PROMPT_DELAY_MS;
       selectName(node);
 
       if (activeReturn && activeReturn.node === node) {
@@ -1012,7 +1014,7 @@ if (stage && draggableItems.length) {
       centerNames();
     }
 
-    idleDelayMs = 5000;
+    idleDelayMs = IDLE_PROMPT_DELAY_MS;
     scheduleIdlePrompt();
   });
 
@@ -1021,12 +1023,12 @@ if (stage && draggableItems.length) {
       clearSelection();
     }
 
-    idleDelayMs = 5000;
+    idleDelayMs = IDLE_PROMPT_DELAY_MS;
     scheduleIdlePrompt();
   });
 
   window.addEventListener("pointermove", () => {
-    idleDelayMs = 5000;
+    idleDelayMs = IDLE_PROMPT_DELAY_MS;
     scheduleIdlePrompt();
   }, { passive: true });
 
