@@ -149,7 +149,7 @@ body *::after {
 }
 
 .top-menu {
-  position: fixed;
+  position: absolute;
   top: 32px;
   right: 32px;
   display: flex;
@@ -308,6 +308,182 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
   border-top: 1px solid rgba(236, 236, 236, 0.16);
 }
 
+.project-lock {
+  position: relative;
+  overflow: visible;
+}
+
+.project-lock-mount {
+  min-height: 720px;
+}
+
+.project-lock-placeholder {
+  min-height: 720px;
+  border: 1px solid rgba(236, 236, 236, 0.08);
+  background:
+    linear-gradient(rgba(236, 236, 236, 0.02), rgba(236, 236, 236, 0.02)),
+    #0a0a0a;
+}
+
+.project-lock-overlay {
+  position: absolute;
+  top: 0;
+  right: -48px;
+  bottom: 0;
+  left: -48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: rgba(5, 5, 5, 0.28);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+  z-index: 6;
+}
+
+.project-lock.is-locked .project-lock-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.project-lock-panel {
+  width: min(100%, 520px);
+  padding: 32px;
+  border: 1px solid rgba(236, 236, 236, 0.16);
+  background: rgba(5, 5, 5, 0.84);
+}
+
+.project-lock-eyebrow {
+  margin: 0 0 16px;
+  color: rgba(236, 236, 236, 0.54);
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.project-lock-title {
+  margin: 0;
+  color: #ececec;
+  font-family: "Inter", sans-serif;
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.project-lock-copy {
+  margin: 16px 0 0;
+  color: rgba(236, 236, 236, 0.72);
+  font-family: "Inter", sans-serif;
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+.project-lock-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.project-lock-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.project-lock-input-wrap {
+  position: relative;
+}
+
+.project-lock-input {
+  min-width: 0;
+  width: 100%;
+  padding: 16px;
+  padding-right: 52px;
+  border: 1px solid rgba(236, 236, 236, 0.16);
+  border-radius: 0;
+  color: #ececec;
+  background: rgba(236, 236, 236, 0.06);
+  font-family: "Inter", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
+  outline: none;
+}
+
+.project-lock-input::placeholder {
+  color: rgba(236, 236, 236, 0.32);
+}
+
+.project-lock-input:focus {
+  border-color: rgba(41, 161, 70, 0.9);
+}
+
+.project-lock-visibility {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  color: rgba(236, 236, 236, 0.72);
+  background: transparent;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.project-lock-visibility-icon {
+  display: block;
+}
+
+.project-lock-visibility-slash {
+  opacity: 1;
+}
+
+.project-lock-visibility[aria-pressed="true"] .project-lock-visibility-slash {
+  opacity: 0;
+}
+
+.project-lock-button {
+  padding: 16px 20px;
+  border: 0;
+  color: #050505;
+  background: #ececec;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.project-lock-error {
+  min-height: 18px;
+  margin: 12px 0 0;
+  color: #f07b9a;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
 .product-block-centered {
   width: 100%;
   margin-inline: auto;
@@ -351,9 +527,9 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
 .product-block-title {
   margin: 0;
   color: #ececec;
-  font-family: "Jersey 15", sans-serif;
-  font-size: clamp(48px, 7vw, 88px);
-  font-weight: 400;
+  font-family: "Inter", sans-serif;
+  font-size: 36px;
+  font-weight: 500;
   line-height: 0.95;
 }
 
@@ -494,6 +670,10 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
   transform: translateY(-1px);
 }
 
+.product-block-link[aria-disabled="true"] {
+  pointer-events: none;
+}
+
 .product-block-link-full {
   display: flex;
   width: 100%;
@@ -508,6 +688,17 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
 
 .product-block-link-split {
   display: flex;
+  width: 100%;
+}
+
+.product-block-link-row-featured {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  row-gap: 4px;
+}
+
+.product-block-link-full-row {
+  display: flex;
+  grid-column: 1 / -1;
   width: 100%;
 }
 
@@ -1203,6 +1394,37 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
     order: 7;
     grid-template-columns: 1fr;
     margin-top: 32px;
+  }
+
+  .project-lock-overlay {
+    right: -24px;
+    left: -24px;
+    padding: 24px;
+  }
+
+  .project-lock-mount,
+  .project-lock-placeholder {
+    min-height: 600px;
+  }
+
+  .project-lock-panel {
+    padding: 24px;
+  }
+
+  .project-lock-title {
+    font-size: 24px;
+  }
+
+  .project-lock-form {
+    grid-template-columns: 1fr;
+  }
+
+  .project-lock-input-wrap {
+    width: 100%;
+  }
+
+  .project-lock-button {
+    width: 100%;
   }
 
   .product-visual-placeholder {

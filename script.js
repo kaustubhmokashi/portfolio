@@ -228,6 +228,136 @@ const clearSharedDragGuide = () => {
   }
 };
 
+const projectLocks = [...document.querySelectorAll(".project-lock[data-project-lock]")];
+const unlockedProjectLocks = new Set();
+const initProjectLocks = () => {
+  if (!projectLocks.length) {
+    return;
+  }
+
+  const encoder = new TextEncoder();
+  const encryptedProjectContentById = {
+    "habuild-tv": {
+      salt: "r//dTjz6GtH6vYZueCLqHg==",
+      iv: "3uRepRqEJC9d0efr",
+      ciphertext:
+        "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",
+      tag: "1jLqqX7F0b7bOHIba4EBxg==",
+    },
+  };
+
+  const base64ToBytes = (value) => Uint8Array.from(atob(value), (char) => char.charCodeAt(0));
+
+  const deriveProjectKey = async (password, saltBytes) => {
+    const keyMaterial = await window.crypto.subtle.importKey(
+      "raw",
+      encoder.encode(password),
+      "PBKDF2",
+      false,
+      ["deriveKey"]
+    );
+
+    return window.crypto.subtle.deriveKey(
+      {
+        name: "PBKDF2",
+        salt: saltBytes,
+        iterations: 120000,
+        hash: "SHA-256",
+      },
+      keyMaterial,
+      {
+        name: "AES-GCM",
+        length: 256,
+      },
+      false,
+      ["decrypt"]
+    );
+  };
+
+  const decryptProjectHtml = async (password, payload) => {
+    const saltBytes = base64ToBytes(payload.salt);
+    const ivBytes = base64ToBytes(payload.iv);
+    const cipherBytes = base64ToBytes(payload.ciphertext);
+    const tagBytes = base64ToBytes(payload.tag);
+    const encryptedBytes = new Uint8Array(cipherBytes.length + tagBytes.length);
+
+    encryptedBytes.set(cipherBytes, 0);
+    encryptedBytes.set(tagBytes, cipherBytes.length);
+
+    const key = await deriveProjectKey(password, saltBytes);
+    const decrypted = await window.crypto.subtle.decrypt(
+      {
+        name: "AES-GCM",
+        iv: ivBytes,
+      },
+      key,
+      encryptedBytes
+    );
+
+    return new TextDecoder().decode(decrypted);
+  };
+
+  projectLocks.forEach((lockNode) => {
+    const lockId = lockNode.dataset.projectLock;
+    const encryptedPayload = encryptedProjectContentById[lockId];
+    const mount = lockNode.querySelector(".project-lock-mount");
+    const form = lockNode.querySelector(".project-lock-form");
+    const input = lockNode.querySelector(".project-lock-input");
+    const error = lockNode.querySelector(".project-lock-error");
+    const visibilityToggle = lockNode.querySelector(".project-lock-visibility");
+
+    if (!encryptedPayload || !mount || !form || !input || !error) {
+      return;
+    }
+
+    const unlock = () => {
+      lockNode.classList.remove("is-locked");
+      unlockedProjectLocks.add(lockId);
+      error.textContent = "";
+      input.value = "";
+    };
+
+    if (unlockedProjectLocks.has(lockId)) {
+      unlock();
+      return;
+    }
+
+    visibilityToggle?.addEventListener("click", () => {
+      const isVisible = input.type === "text";
+      input.type = isVisible ? "password" : "text";
+      visibilityToggle.setAttribute("aria-pressed", String(!isVisible));
+      visibilityToggle.setAttribute("aria-label", isVisible ? "Show password" : "Hide password");
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      error.textContent = "";
+
+      if (!window.crypto?.subtle) {
+        error.textContent = "This browser can't verify the password right now.";
+        return;
+      }
+
+      const value = input.value.trim();
+      if (!value) {
+        error.textContent = "Enter the password to unlock this project.";
+        return;
+      }
+
+      try {
+        const html = await decryptProjectHtml(value, encryptedPayload);
+        mount.innerHTML = html;
+        unlock();
+        return;
+      } catch (unlockError) {
+        error.textContent = "That password didn’t match.";
+      }
+    });
+  });
+};
+
+initProjectLocks();
+
 if (topMenu && topMenuToggle) {
   const updateMobileTogglePinning = () => {
     if (!coarsePointer || window.innerWidth > 640 || !pageHeading) {
@@ -1958,11 +2088,24 @@ if (repairableTitles.length) {
     );
   };
 
+  const alignRepairableToLeftTop = (node, left, top) => {
+    const rect = node.getBoundingClientRect();
+    const currentOffset = getRepairableOffset(node);
+
+    setRepairableOffset(
+      node,
+      currentOffset.x + (left - rect.left),
+      currentOffset.y + (top - rect.top)
+    );
+  };
+
   const updateRepairableOrigins = () => {
     repairableTitles.forEach((node) => {
       const rect = node.getBoundingClientRect();
       const currentOffset = getRepairableOffset(node);
       repairOriginMap.set(node, {
+        left: rect.left - currentOffset.x,
+        top: rect.top - currentOffset.y,
         centerX: rect.left + rect.width / 2 - currentOffset.x,
         centerY: rect.top + rect.height / 2 - currentOffset.y,
       });
@@ -2192,6 +2335,50 @@ if (repairableTitles.length) {
     }
   };
 
+  const exitRepairCursor = (helperState, exitPoint, duration = 520) => {
+    const exitStartPoint = { x: repairCursorPosition.x, y: repairCursorPosition.y };
+    const exitControl = getCurveControlPoint(exitStartPoint, exitPoint, 0.2);
+    const exitStart = performance.now();
+    let finished = false;
+
+    const finishExit = () => {
+      if (finished) {
+        return;
+      }
+
+      finished = true;
+      if (activeRepair === helperState) {
+        activeRepair = null;
+      }
+      hideRepairCursor();
+      processRepairQueue();
+    };
+
+    const fallbackTimeout = window.setTimeout(finishExit, duration + 120);
+    helperState.timeouts.push(fallbackTimeout);
+
+    const animateExit = (exitNow) => {
+      if (activeRepair && activeRepair !== helperState) {
+        finishExit();
+        return;
+      }
+
+      const exitProgress = Math.min((exitNow - exitStart) / duration, 1);
+      const easedExit = 1 - (1 - exitProgress) * (1 - exitProgress);
+      const nextPoint = getQuadraticPoint(exitStartPoint, exitControl, exitPoint, easedExit);
+      positionRepairCursor(nextPoint.x, nextPoint.y);
+
+      if (exitProgress < 1) {
+        helperState.frameId = requestAnimationFrame(animateExit);
+        return;
+      }
+
+      finishExit();
+    };
+
+    helperState.frameId = requestAnimationFrame(animateExit);
+  };
+
   const getRepairCreatorMessage = () => {
     const tierIndex = totalMoveCount <= 1 ? 0 : totalMoveCount <= 3 ? 1 : 2;
     const messages = creatorMessageTiers[tierIndex];
@@ -2219,9 +2406,9 @@ if (repairableTitles.length) {
       return;
     }
 
-    const { originalText, defaultText, minWidth, minHeight, centerX, centerY } = activeRepairEdit;
+    const { originalText, defaultText, minWidth, minHeight, left, top } = activeRepairEdit;
     setRepairableText(node, revert ? originalText : getRepairableText(node));
-    recenterRepairableToPoint(node, centerX, centerY);
+    alignRepairableToLeftTop(node, left, top);
     clearRepairableEditState(node);
     node.style.minWidth = "";
     node.style.minHeight = "";
@@ -2271,8 +2458,8 @@ if (repairableTitles.length) {
       node,
       originalText: getRepairableText(node),
       defaultText: repairableTextMap.get(node) || "",
-      centerX: rect.left + rect.width / 2,
-      centerY: rect.top + rect.height / 2,
+      left: rect.left,
+      top: rect.top,
       minWidth: rect.width,
       minHeight: rect.height,
     };
@@ -2431,35 +2618,7 @@ if (repairableTitles.length) {
                       }
 
                       const exitPoint = getRandomEdgePoint(originCenterX, originCenterY);
-                      const exitStartPoint = {
-                        x: repairCursorPosition.x,
-                        y: repairCursorPosition.y,
-                      };
-                      const exitControl = getCurveControlPoint(exitStartPoint, exitPoint, 0.2);
-                      const exitStart = performance.now();
-
-                      const animateExit = (exitNow) => {
-                        const exitProgress = Math.min((exitNow - exitStart) / 420, 1);
-                        const easedExit = 1 - (1 - exitProgress) * (1 - exitProgress);
-                        const nextPoint = getQuadraticPoint(
-                          exitStartPoint,
-                          exitControl,
-                          exitPoint,
-                          easedExit
-                        );
-                        positionRepairCursor(nextPoint.x, nextPoint.y);
-
-                        if (exitProgress < 1) {
-                          helperState.frameId = requestAnimationFrame(animateExit);
-                          return;
-                        }
-
-                        activeRepair = null;
-                        hideRepairCursor();
-                        processRepairQueue();
-                      };
-
-                      helperState.frameId = requestAnimationFrame(animateExit);
+                      exitRepairCursor(helperState, exitPoint, 420);
                     }, 2000);
 
                     helperState.timeouts.push(holdTimeout);
@@ -2571,8 +2730,8 @@ if (repairableTitles.length) {
       return;
     }
 
-    const centerX = currentCenterX;
-    const centerY = currentCenterY;
+      const centerX = currentCenterX;
+      const centerY = currentCenterY;
     const startPoint =
       repairCursorVisible
         ? { x: repairCursorPosition.x, y: repairCursorPosition.y }
@@ -2706,32 +2865,7 @@ if (repairableTitles.length) {
                   }
 
                   const exitPoint = getRandomEdgePoint(centerX, centerY);
-                  const exitStartPoint = { x: repairCursorPosition.x, y: repairCursorPosition.y };
-                  const exitControl = getCurveControlPoint(exitStartPoint, exitPoint, 0.2);
-                  const exitStart = performance.now();
-
-                  const animateExit = (exitNow) => {
-                    const exitProgress = Math.min((exitNow - exitStart) / 520, 1);
-                    const easedExit = 1 - (1 - exitProgress) * (1 - exitProgress);
-                    const nextPoint = getQuadraticPoint(
-                      exitStartPoint,
-                      exitControl,
-                      exitPoint,
-                      easedExit
-                    );
-                    positionRepairCursor(nextPoint.x, nextPoint.y);
-
-                    if (exitProgress < 1) {
-                      helperState.frameId = requestAnimationFrame(animateExit);
-                      return;
-                    }
-
-                    activeRepair = null;
-                    hideRepairCursor();
-                    processRepairQueue();
-                  };
-
-                  helperState.frameId = requestAnimationFrame(animateExit);
+                  exitRepairCursor(helperState, exitPoint, 520);
                 }, 2000);
 
                 helperState.timeouts.push(holdTimeout);
@@ -2810,7 +2944,7 @@ if (repairableTitles.length) {
         return;
       }
 
-      recenterRepairableToPoint(node, activeRepairEdit.centerX, activeRepairEdit.centerY);
+      alignRepairableToLeftTop(node, activeRepairEdit.left, activeRepairEdit.top);
     });
 
     node.addEventListener("dblclick", (event) => {
