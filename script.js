@@ -79,6 +79,7 @@ const idlePrompts = [
   "Give it a little nudge.",
   "Try touching the layout.",
 ];
+const draggableItems = [...document.querySelectorAll(".draggable-item")];
 
 if (cursor && finePointer) {
   const moveCursor = (event) => {
@@ -101,12 +102,11 @@ if (cursor && finePointer) {
 }
 
 const stage = document.querySelector(".hero-nameplate");
-const draggableNames = [...document.querySelectorAll(".name-layer")];
 const dragGuideLine = document.querySelector(".drag-guide-line");
 const dragGuideLabel = document.querySelector(".drag-guide-label");
 const dragGuideText = document.querySelector(".drag-guide-text");
 
-if (stage && draggableNames.length) {
+if (stage && draggableItems.length) {
   let selectedName = null;
   let hasPositionedNames = false;
   let hasUserMovedName = false;
@@ -122,19 +122,30 @@ if (stage && draggableNames.length) {
   let activeReturn = null;
 
   const selectName = (node) => {
-    draggableNames.forEach((item) => item.classList.toggle("is-selected", item === node));
+    draggableItems.forEach((item) => item.classList.toggle("is-selected", item === node));
     selectedName = node;
   };
 
   const clearSelection = () => {
-    draggableNames.forEach((item) => item.classList.remove("is-selected"));
+    draggableItems.forEach((item) => item.classList.remove("is-selected"));
     selectedName = null;
   };
 
   const centerNames = () => {
-    const [firstName, secondName] = draggableNames;
+    const firstName = draggableItems.find(
+      (item) => item.dataset.draggableName === "kaustubh"
+    );
+    const secondName = draggableItems.find(
+      (item) => item.dataset.draggableName === "mokashi"
+    );
+    const roleLayer = draggableItems.find(
+      (item) => item.dataset.draggableName === "product-creator"
+    );
+    const captionLayer = draggableItems.find(
+      (item) => item.dataset.draggableName === "tagline"
+    );
 
-    if (!firstName || !secondName) {
+    if (!firstName || !secondName || !roleLayer || !captionLayer) {
       return;
     }
 
@@ -142,20 +153,37 @@ if (stage && draggableNames.length) {
     const stageHeight = window.innerHeight;
     const firstRect = firstName.getBoundingClientRect();
     const secondRect = secondName.getBoundingClientRect();
+    const roleRect = roleLayer.getBoundingClientRect();
+    const captionRect = captionLayer.getBoundingClientRect();
     const groupHeight = firstRect.height + secondRect.height;
     const top = (stageHeight - groupHeight) / 2;
+    const firstLeft = (stageWidth - firstRect.width) / 2;
+    const secondLeft = (stageWidth - secondRect.width) / 2;
+    const secondTop = top + firstRect.height;
 
-    firstName.style.left = `${(stageWidth - firstRect.width) / 2}px`;
+    firstName.style.left = `${firstLeft}px`;
     firstName.style.top = `${top}px`;
-    secondName.style.left = `${(stageWidth - secondRect.width) / 2}px`;
-    secondName.style.top = `${top + firstRect.height}px`;
+    secondName.style.left = `${secondLeft}px`;
+    secondName.style.top = `${secondTop}px`;
+    roleLayer.style.left = `${firstLeft + firstRect.width / 2 - roleRect.width / 2}px`;
+    roleLayer.style.top = `${top - 43 - roleRect.height}px`;
+    captionLayer.style.left = `${secondLeft + secondRect.width / 2 - captionRect.width / 2}px`;
+    captionLayer.style.top = `${secondTop + secondRect.height + 4}px`;
     originMap.set(firstName, {
-      left: (stageWidth - firstRect.width) / 2,
+      left: firstLeft,
       top,
     });
     originMap.set(secondName, {
-      left: (stageWidth - secondRect.width) / 2,
-      top: top + firstRect.height,
+      left: secondLeft,
+      top: secondTop,
+    });
+    originMap.set(roleLayer, {
+      left: firstLeft + firstRect.width / 2 - roleRect.width / 2,
+      top: top - 43 - roleRect.height,
+    });
+    originMap.set(captionLayer, {
+      left: secondLeft + secondRect.width / 2 - captionRect.width / 2,
+      top: secondTop + secondRect.height + 4,
     });
   };
 
@@ -347,7 +375,7 @@ if (stage && draggableNames.length) {
       }
 
       const targetNode =
-        draggableNames[Math.floor(Math.random() * draggableNames.length)];
+        draggableItems[Math.floor(Math.random() * draggableItems.length)];
       const targetPosition = getElementPosition(targetNode);
       const targetCenter = {
         x: targetPosition.left + targetPosition.width / 2,
@@ -854,14 +882,23 @@ if (stage && draggableNames.length) {
   };
 
   positionNames();
-  selectName(draggableNames[0]);
+  selectName(
+    draggableItems.find((item) => item.dataset.draggableName === "kaustubh") ||
+      draggableItems[0]
+  );
   window.addEventListener("load", centerNames);
 
   if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(centerNames);
+    document.fonts.ready.then(() => {
+      centerNames();
+      selectName(
+        draggableItems.find((item) => item.dataset.draggableName === "kaustubh") ||
+          draggableItems[0]
+      );
+    });
   }
 
-  draggableNames.forEach((node) => {
+  draggableItems.forEach((node) => {
     node.addEventListener("pointerdown", (event) => {
       event.stopPropagation();
       idleDelayMs = 5000;
@@ -980,7 +1017,7 @@ if (stage && draggableNames.length) {
   });
 
   document.addEventListener("pointerdown", (event) => {
-    if (!event.target.closest(".name-layer")) {
+    if (!event.target.closest(".draggable-item")) {
       clearSelection();
     }
 

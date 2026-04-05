@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Jersey+15&family=Noto+Sans:wght@400;500;600&family=Oswald:wght@400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Jersey+15&family=Noto+Sans:wght@300;400;500;600&family=Oswald:wght@400&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
@@ -21,11 +21,24 @@
       <span class="drag-guide-text">dx: 0,  dy: 0</span>
     </div>
     <main class="hero-nameplate" aria-label="Kaustubh Mokashi">
-      <p class="name-layer name-layer-filled" data-draggable-name="kaustubh">
-        KAUSTUBH
+      <p
+        class="draggable-item name-layer name-layer-filled is-selected"
+        data-draggable-name="kaustubh"
+      >
+        <span class="name-layer-mask">
+          <span class="name-layer-text">KAUSTUBH</span>
+        </span>
       </p>
-      <p class="name-layer name-layer-outline" data-draggable-name="mokashi">
-        MOKASHI
+      <p class="draggable-item copy-layer role-layer" data-draggable-name="product-creator">
+        PRODUCT CREATOR
+      </p>
+      <p class="draggable-item name-layer name-layer-outline" data-draggable-name="mokashi">
+        <span class="name-layer-mask">
+          <span class="name-layer-text">MOKASHI</span>
+        </span>
+      </p>
+      <p class="draggable-item copy-layer caption-layer" data-draggable-name="tagline">
+        I create products my users love to use.
       </p>
     </main>
     <div class="personal-cursor" aria-hidden="true">
@@ -148,6 +161,12 @@
         <span class="return-cursor-prompt">Try moving it.</span>
       </span>
     </div>
+    <img
+      class="corner-frame"
+      src="./frame-9.svg"
+      alt=""
+      aria-hidden="true"
+    />
     <script src="./script.js"></script>
   </body>
 </html>
