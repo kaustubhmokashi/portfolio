@@ -3261,3 +3261,54 @@ if (repairableTitles.length) {
     document.fonts.ready.then(updateRepairableOrigins);
   }
 }
+
+const revealCards = () => {
+  const cards = [...document.querySelectorAll(".product-block")];
+  if (!cards.length) {
+    return;
+  }
+
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    cards.forEach((card) => card.classList.add("is-visible"));
+    return;
+  }
+
+  document.documentElement.classList.add("reveal-ready");
+
+  cards.forEach((card) => card.classList.remove("is-visible"));
+
+  const observer = new IntersectionObserver(
+    (entries, instance) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          instance.unobserve(entry.target);
+        }
+      });
+    },
+    {
+      threshold: 0.1,
+      rootMargin: "0px 0px -10% 0px",
+    }
+  );
+
+  cards.forEach((card, index) => {
+    if (index === 0) {
+      return;
+    }
+    observer.observe(card);
+  });
+
+  const firstCard = cards[0];
+  if (firstCard) {
+    firstCard.classList.remove("is-visible");
+    firstCard.style.transition = "none";
+    firstCard.getBoundingClientRect();
+    firstCard.style.transition = "";
+    setTimeout(() => {
+      firstCard.classList.add("is-visible");
+    }, 200);
+  }
+};
+
+revealCards();
