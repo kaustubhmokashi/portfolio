@@ -212,8 +212,8 @@
         <span class="return-cursor-prompt"></span>
       </span>
     </div>
-    <script src="../version.js?v=1.0.1"></script>
-    <script src="../script.js?v=1.0.1"></script>
+    <script src="../version.js?v=1.0.2"></script>
+    <script src="../script.js?v=1.0.2"></script>
     <script>
       const driveInput = document.querySelector("#drive-link-input");
       const driveOutput = document.querySelector("#drive-link-output");
@@ -226,23 +226,16 @@
           return "";
         }
         const trimmed = value.trim();
-        const isDrive = trimmed.includes("drive.google.com");
-        if (!isDrive) {
-          return "";
-        }
         if (!trimmed.includes("drive.google.com")) {
-          return trimmed;
-        }
-        if (trimmed.includes("uc?export=download&id=")) {
-          return trimmed;
+          return "";
         }
         const fileIdMatch =
           trimmed.match(/\/file\/d\/([^/]+)/) || trimmed.match(/[?&]id=([^&]+)/);
         if (!fileIdMatch) {
-          return trimmed;
+          return "";
         }
         const fileId = fileIdMatch[1];
-        return `https://drive.google.com/uc?export=download&id=${fileId}`;
+        return `https://lh3.googleusercontent.com/d/${fileId}`;
       };
 
       const updateCopyState = () => {

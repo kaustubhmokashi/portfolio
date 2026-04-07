@@ -146,10 +146,36 @@ body *::after {
   padding: 8px 16px;
   margin: -8px -16px;
   text-decoration: none;
+  position: relative;
 }
 
 .site-title-link::after {
   inset: 0;
+}
+
+.version-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 10px;
+  padding: 6px 10px;
+  background: #ececec;
+  color: #050505;
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  border-radius: 2px;
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  white-space: nowrap;
+  z-index: 50;
+}
+
+.site-title-link.show-version .version-tooltip {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .top-menu {

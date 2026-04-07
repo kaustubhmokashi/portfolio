@@ -3385,10 +3385,16 @@ const normalizeDriveImageLink = (value) => {
     return trimmed;
   }
   if (trimmed.includes("uc?export=download&id=")) {
-    return trimmed.replace("export=download", "export=view");
+    const fileId = extractDriveFileId(trimmed);
+    return fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : trimmed;
   }
   if (trimmed.includes("uc?export=view&id=")) {
-    return trimmed;
+    const fileId = extractDriveFileId(trimmed);
+    return fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : trimmed;
+  }
+  if (trimmed.includes("uc?id=")) {
+    const fileId = extractDriveFileId(trimmed);
+    return fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : trimmed;
   }
   const fileIdMatch =
     trimmed.match(/\/file\/d\/([^/]+)/) || trimmed.match(/[?&]id=([^&]+)/);
@@ -3396,7 +3402,7 @@ const normalizeDriveImageLink = (value) => {
     return trimmed;
   }
   const fileId = fileIdMatch[1];
-  return `https://drive.google.com/uc?export=view&id=${fileId}`;
+  return `https://lh3.googleusercontent.com/d/${fileId}`;
 };
 
 const extractDriveFileId = (url) => {
@@ -3423,6 +3429,7 @@ const applyDriveImageFallback = (img) => {
   img.referrerPolicy = "no-referrer";
   img.crossOrigin = "anonymous";
   const candidates = [
+    `https://lh3.googleusercontent.com/d/${fileId}`,
     `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`,
     `https://drive.google.com/uc?export=view&id=${fileId}`,
     `https://drive.google.com/uc?export=download&id=${fileId}`,
@@ -3605,7 +3612,7 @@ const selectTemplateCard = (container, index, record) => {
 
 const ensureUnifiedPlaceholders = () => {
   const placeholderSrc =
-    "https://drive.google.com/uc?export=view&id=1vCY-LiFEIUPZOpsce4dYIo6P1pAeN9cp";
+    "https://lh3.googleusercontent.com/d/1vCY-LiFEIUPZOpsce4dYIo6P1pAeN9cp";
   const frames = document.querySelectorAll(".product-visual-frame");
   frames.forEach((frame) => {
     const lockedFrame = frame.closest(".project-lock.is-locked");
@@ -3714,3 +3721,43 @@ const scheduleParallax = () => {
 scheduleParallax();
 window.addEventListener("scroll", scheduleParallax, { passive: true });
 window.addEventListener("resize", scheduleParallax);
+
+const initVersionTooltip = () => {
+  const links = document.querySelectorAll(".site-title-link");
+  if (!links.length) {
+    return;
+  }
+  const version = window.APP_VERSION || "1.0.1";
+  links.forEach((link) => {
+    let tooltip = link.querySelector(".version-tooltip");
+    if (!tooltip) {
+      tooltip = document.createElement("span");
+      tooltip.className = "version-tooltip";
+      tooltip.textContent = `v${version}`;
+      link.appendChild(tooltip);
+    } else {
+      tooltip.textContent = `v${version}`;
+    }
+
+    let hoverTimer = null;
+    const showTooltip = () => {
+      link.classList.add("show-version");
+    };
+    const hideTooltip = () => {
+      link.classList.remove("show-version");
+    };
+
+    link.addEventListener("mouseenter", () => {
+      hoverTimer = window.setTimeout(showTooltip, 2000);
+    });
+    link.addEventListener("mouseleave", () => {
+      if (hoverTimer) {
+        window.clearTimeout(hoverTimer);
+        hoverTimer = null;
+      }
+      hideTooltip();
+    });
+  });
+};
+
+initVersionTooltip();
