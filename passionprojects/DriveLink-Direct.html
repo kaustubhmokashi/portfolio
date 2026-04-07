@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DriveLink Direct | Kaustubh Mokashi</title>
+    <meta property="og:title" content="DriveLink Direct — Kaustubh Mokashi" />
+    <meta
+      property="og:description"
+      content="Convert Google Drive share links into direct-download URLs in one click."
+    />
+    <meta property="og:image" content="../thumbnail.svg" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="DriveLink Direct — Kaustubh Mokashi" />
+    <meta
+      name="twitter:description"
+      content="Convert Google Drive share links into direct-download URLs in one click."
+    />
+    <meta name="twitter:image" content="../thumbnail.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Jersey+15&family=Noto+Sans:wght@300;400;500;600&family=Oswald:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=1" />
+    <link rel="stylesheet" href="../styles.css?v=19" />
+  </head>
+  <body class="page-passion">
+    <a class="site-title site-title-link" href="https://www.kaustubhmokashi.com">KAUSTUBH MOKASHI</a>
+    <button
+      class="top-menu-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="primary-menu"
+      aria-label="Open menu"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <nav class="top-menu" id="primary-menu" aria-label="Primary">
+      <a class="top-menu-link" href="../live-products.html">Live Products</a>
+      <a class="top-menu-link is-active" href="../passion-projects.html">Passion projects</a>
+      <a class="top-menu-link" href="../case-studies.html">Case Studies</a>
+      <a class="top-menu-link" href="../resume.html">Resume</a>
+    </nav>
+    <svg class="drag-guide" aria-hidden="true">
+      <line class="drag-guide-line" x1="0" y1="0" x2="0" y2="0"></line>
+    </svg>
+    <div class="drag-guide-label" aria-hidden="true">
+      <span class="drag-guide-text">dx: 0,  dy: 0</span>
+    </div>
+    <main class="page-shell page-shell-centered">
+      <section class="page-panel page-panel-centered page-panel-passion" aria-label="DriveLink Direct">
+        <p class="page-kicker">Passion Project</p>
+        <h1 class="page-heading">DriveLink Direct</h1>
+        <p class="drive-link-subtitle">
+          Convert Google Drive share links into direct-download URLs for images and files.
+        </p>
+
+        <div class="drive-link-tool">
+          <form class="drive-link-form" autocomplete="off">
+            <label class="drive-link-label" for="drive-link-input">Google Drive share link</label>
+            <input
+              id="drive-link-input"
+              class="drive-link-input"
+              type="url"
+              placeholder="https://drive.google.com/file/d/..."
+              required
+            />
+            <button class="drive-link-generate" type="submit">Generate Direct Link</button>
+          </form>
+
+          <div class="drive-link-output">
+            <label class="drive-link-label" for="drive-link-output">Direct download link</label>
+            <div class="drive-link-output-row">
+              <input
+                id="drive-link-output"
+                class="drive-link-input"
+                type="text"
+                placeholder="Direct link will appear here"
+                readonly
+              />
+              <button class="drive-link-copy" type="button" disabled>Copy</button>
+            </div>
+            <p class="drive-link-helper">
+              Works with standard Google Drive share links and file IDs.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script src="../script.js"></script>
+    <script>
+      const driveInput = document.querySelector("#drive-link-input");
+      const driveOutput = document.querySelector("#drive-link-output");
+      const driveCopy = document.querySelector(".drive-link-copy");
+      const driveForm = document.querySelector(".drive-link-form");
+
+      const normalizeDriveLink = (value) => {
+        if (!value) {
+          return "";
+        }
+        const trimmed = value.trim();
+        if (!trimmed.includes("drive.google.com")) {
+          return trimmed;
+        }
+        if (trimmed.includes("uc?export=download&id=")) {
+          return trimmed;
+        }
+        const fileIdMatch =
+          trimmed.match(/\/file\/d\/([^/]+)/) || trimmed.match(/[?&]id=([^&]+)/);
+        if (!fileIdMatch) {
+          return trimmed;
+        }
+        const fileId = fileIdMatch[1];
+        return `https://drive.google.com/uc?export=download&id=${fileId}`;
+      };
+
+      const updateCopyState = () => {
+        driveCopy.disabled = !driveOutput.value;
+      };
+
+      driveForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        driveOutput.value = normalizeDriveLink(driveInput.value);
+        updateCopyState();
+      });
+
+      driveCopy.addEventListener("click", async () => {
+        if (!driveOutput.value) {
+          return;
+        }
+        try {
+          await navigator.clipboard.writeText(driveOutput.value);
+          driveCopy.textContent = "Copied";
+        } catch {
+          driveCopy.textContent = "Copy Failed";
+        }
+        window.setTimeout(() => {
+          driveCopy.textContent = "Copy";
+        }, 1400);
+      });
+
+      updateCopyState();
+    </script>
+  </body>
+</html>
