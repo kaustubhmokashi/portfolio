@@ -744,6 +744,17 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
   gap: 8px;
 }
 
+.case-study-deck-arrow[data-deck-prev] .cta-arrow {
+  margin-left: 0;
+  margin-right: 4px;
+  transform: translateX(0);
+}
+
+.case-study-deck-arrow[data-deck-prev]:hover .cta-arrow,
+.case-study-deck-arrow[data-deck-prev]:focus-visible .cta-arrow {
+  transform: translateX(-8px);
+}
+
 .case-study-deck-label {
   font-size: 18px;
   font-weight: 500;
