@@ -3411,16 +3411,21 @@ const applyDriveImageFallback = (img) => {
   if (!img || img.dataset.driveFallback === "true") {
     return;
   }
+  const isSecure = window.location.protocol === "https:";
+  if (!isSecure) {
+    return;
+  }
   const fileId = extractDriveFileId(img.src);
   if (!fileId) {
     return;
   }
   img.dataset.driveFallback = "true";
   img.referrerPolicy = "no-referrer";
+  img.crossOrigin = "anonymous";
   const candidates = [
+    `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`,
     `https://drive.google.com/uc?export=view&id=${fileId}`,
     `https://drive.google.com/uc?export=download&id=${fileId}`,
-    `https://drive.google.com/thumbnail?id=${fileId}&sz=w2000`,
   ];
   let index = 0;
   img.addEventListener("error", () => {
@@ -3429,9 +3434,7 @@ const applyDriveImageFallback = (img) => {
       img.src = candidates[index];
     }
   });
-  if (!img.src.includes("thumbnail")) {
-    img.src = candidates[0];
-  }
+  img.src = candidates[0];
 };
 
 const applyCardData = (card, record) => {
@@ -3639,6 +3642,8 @@ const ensureUnifiedPlaceholders = () => {
     if (frameImage.includes("drive.google.com")) {
       applyDriveImageFallback(img);
     }
+    img.referrerPolicy = "no-referrer";
+    img.crossOrigin = "anonymous";
 
     const label = frame.querySelector(".product-visual-label");
     if (label) {
