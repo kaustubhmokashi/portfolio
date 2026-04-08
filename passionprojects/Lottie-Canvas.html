@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lottie Canvas | Kaustubh Mokashi</title>
+    <meta property="og:title" content="Lottie Canvas — Kaustubh Mokashi" />
+    <meta
+      property="og:description"
+      content="Preview .lottie and .json files, convert JSON to Lottie, and generate a quick animation." />
+    <meta property="og:image" content="./Lottie-Canvas/thumbnail.svg" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Lottie Canvas — Kaustubh Mokashi" />
+    <meta
+      name="twitter:description"
+      content="Preview .lottie and .json files, convert JSON to Lottie, and generate a quick animation." />
+    <meta name="twitter:image" content="./Lottie-Canvas/thumbnail.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Jersey+15&display=swap"
+      rel="stylesheet" />
+    <link rel="icon" type="image/svg+xml" href="./Lottie-Canvas/favicon.svg?v=1" />
+    <link rel="stylesheet" href="./Lottie-Canvas/styles.css?v=1.0.9" />
+    <link rel="stylesheet" href="../styles.css?v=1.0.9" />
+  </head>
+  <body class="page-passion">
+    <a class="site-title site-title-link" href="https://www.kaustubhmokashi.com">KAUSTUBH MOKASHI</a>
+    <button
+      class="top-menu-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="primary-menu"
+      aria-label="Open menu"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <nav class="top-menu" id="primary-menu" aria-label="Primary">
+      <a class="top-menu-link" href="../live-products.html">Live Products</a>
+      <a class="top-menu-link is-active" href="../passion-projects.html">Passion projects</a>
+      <a class="top-menu-link" href="../case-studies.html">Case Studies</a>
+      <a class="top-menu-link" href="../resume.html">Resume</a>
+    </nav>
+    <svg class="drag-guide" aria-hidden="true">
+      <line class="drag-guide-line" x1="0" y1="0" x2="0" y2="0"></line>
+    </svg>
+    <div class="drag-guide-label" aria-hidden="true">
+      <span class="drag-guide-text">dx: 0, dy: 0</span>
+    </div>
+
+    <main class="page-shell page-shell-padded">
+      <section class="lottie-playground" aria-label="Lottie Canvas">
+        <div class="lottie-preview-panel" id="lottieDropzone">
+          <div class="lottie-preview-header">
+            <div class="lottie-preview-title">
+              <span class="tag">Upload</span>
+              <div class="lottie-title-row">
+                <h1 class="page-heading">Lottie Preview</h1>
+                <div class="lottie-status-inline" id="previewStatusInline">Awaiting a file.</div>
+              </div>
+            </div>
+            <div class="lottie-preview-actions">
+              <button class="lottie-secondary-btn" id="editModeBtn" type="button" disabled>Edit</button>
+              <button class="lottie-primary lottie-upload-btn" id="uploadToggleBtn" type="button">
+                Upload
+              </button>
+            </div>
+          </div>
+          <div class="lottie-player-wrap">
+            <div class="lottie-upload-indicator" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <path
+                  d="M14 4L14 18"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M8 10L14 4L20 10"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <rect
+                  x="5"
+                  y="18"
+                  width="18"
+                  height="6"
+                  rx="3"
+                  stroke="currentColor"
+                  stroke-width="2"
+                />
+              </svg>
+              <span>Drop or upload</span>
+            </div>
+            <div class="lottie-selection-box" id="selectionBox" aria-hidden="true"></div>
+            <div id="lottieStage" class="lottie-stage-canvas" aria-label="Lottie preview"></div>
+          </div>
+          <div class="lottie-preview-meta" id="previewStatus">Awaiting a file.</div>
+          <div class="lottie-timeline">
+            <button class="lottie-primary" id="togglePlayBtn" type="button" disabled>Play</button>
+            <div class="lottie-timeline-track">
+              <input type="range" id="frameScrub" min="0" max="0" value="0" />
+            </div>
+            <div class="lottie-frame-readout">
+              <span id="currentFrame">0</span>
+              <span>/</span>
+              <span id="totalFrames">0</span>
+            </div>
+          </div>
+        </div>
+        <input type="file" id="lottieFileInput" accept=".json,.lottie,application/json" />
+
+        <aside class="lottie-convert-panel" aria-label="Download options">
+          <div class="lottie-download-panel">
+            <div class="lottie-convert-header">
+              <span class="tag">Conversion</span>
+              <h2>Download Options</h2>
+              <p>Grab the animation you are previewing as JSON or .lottie.</p>
+            </div>
+
+            <div class="lottie-download-card">
+              <div>
+                <h3>JSON Export</h3>
+                <p>Direct animation data. Great for editing or pipelines.</p>
+                <span class="lottie-size" id="jsonSize">—</span>
+              </div>
+              <button class="lottie-primary" id="downloadJsonBtn" type="button" disabled>
+                Download JSON
+              </button>
+            </div>
+
+            <div class="lottie-download-card">
+              <div>
+                <h3>.lottie Export</h3>
+                <p>Compressed package for production use.</p>
+                <span class="lottie-size" id="lottieSize">—</span>
+              </div>
+              <button class="lottie-primary" id="downloadLottieBtn" type="button" disabled>
+                Download .lottie
+              </button>
+            </div>
+          </div>
+
+          <div class="lottie-edit-panel" aria-label="Edit colors">
+            <div class="lottie-convert-header">
+              <span class="tag">Edit</span>
+              <h2>Color Palette</h2>
+              <p>Pick a color to update it everywhere in the animation.</p>
+            </div>
+            <div class="lottie-hierarchy-block">
+              <div class="lottie-hierarchy-title">Hierarchy</div>
+              <div class="lottie-hierarchy" id="hierarchyList"></div>
+            </div>
+            <div class="lottie-edit-hint">Select an element, then press Delete or Backspace to remove it.</div>
+            <div class="lottie-palette" id="paletteList"></div>
+            <button class="lottie-primary lottie-save-btn" id="saveEditBtn" type="button">Save</button>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <div class="personal-cursor" aria-hidden="true">
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 22 22"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <g filter="url(#personal-cursor-shadow)">
+          <path
+            d="M7.70778 17.5249L2.56947 2.844C2.28453 2.02988 3.09489 1.2611 3.89289 1.58848L17.9799 7.36777C18.9193 7.75316 18.7528 9.13125 17.7487 9.28187L12.0025 10.1438C11.5989 10.2043 11.2725 10.5041 11.178 10.9011L9.62444 17.4261C9.39316 18.3975 8.03764 18.4673 7.70778 17.5249Z"
+            fill="#FFF"
+            stroke="#FFF"
+            stroke-width="1"
+          />
+        </g>
+        <defs>
+          <filter
+            id="personal-cursor-shadow"
+            x="0.00000977516"
+            y="-0.00000548363"
+            width="21.1108"
+            height="21.7046"
+            filterUnits="userSpaceOnUse"
+            color-interpolation-filters="sRGB"
+          >
+            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feColorMatrix
+              in="SourceAlpha"
+              type="matrix"
+              values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+              result="hardAlpha"
+            />
+            <feOffset dy="1" />
+            <feGaussianBlur stdDeviation="1.005" />
+            <feComposite in2="hardAlpha" operator="out" />
+            <feColorMatrix
+              type="matrix"
+              values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.28 0"
+            />
+            <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_134_2658" />
+            <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_134_2658" result="shape" />
+          </filter>
+        </defs>
+      </svg>
+      <span class="personal-cursor-label">You</span>
+    </div>
+    <div class="return-cursor" aria-hidden="true">
+      <svg class="cursor-icon" width="24" height="28" viewBox="0 0 24 28" fill="none">
+        <path
+          d="M3 2L21 12L13 14L10 22L3 2Z"
+          fill="#29A146"
+          stroke="#FFF"
+          stroke-width="1"
+          style="filter: drop-shadow(0 1px 2.01px rgba(0, 0, 0, 0.28));"
+        />
+      </svg>
+      <span class="return-cursor-label">Kaustubh Mokashi</span>
+      <span class="return-cursor-comment"></span>
+      <span class="return-cursor-prompt"></span>
+    </div>
+
+    <script src="../version.js?v=1.0.9"></script>
+    <script src="../script.js?v=1.0.9"></script>
+    <script src="./Lottie-Canvas/script.js?v=1.0.9"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+    <script>
+      (() => {
+      const lottieDropzone = document.getElementById("lottieDropzone");
+      const lottieFileInput = document.getElementById("lottieFileInput");
+      const lottieStage = document.getElementById("lottieStage");
+      const previewStatus = document.getElementById("previewStatus");
+      const previewStatusInline = document.getElementById("previewStatusInline");
+      const selectionBox = document.getElementById("selectionBox");
+      const downloadJsonBtn = document.getElementById("downloadJsonBtn");
+      const downloadLottieBtn = document.getElementById("downloadLottieBtn");
+      const jsonSize = document.getElementById("jsonSize");
+      const lottieSize = document.getElementById("lottieSize");
+      const togglePlayBtn = document.getElementById("togglePlayBtn");
+      const frameScrub = document.getElementById("frameScrub");
+      const currentFrame = document.getElementById("currentFrame");
+      const totalFrames = document.getElementById("totalFrames");
+      const editModeBtn = document.getElementById("editModeBtn");
+      const uploadToggleBtn = document.getElementById("uploadToggleBtn");
+      const paletteList = document.getElementById("paletteList");
+      const saveEditBtn = document.getElementById("saveEditBtn");
+      const hierarchyList = document.getElementById("hierarchyList");
+      const siteTitle = document.querySelector(".site-title");
+      const topMenu = document.querySelector(".top-menu");
+
+      let currentJsonText = "";
+      let currentFileName = "animation";
+      let lottieInstance = null;
+      let sizeToken = 0;
+      let isScrubbing = false;
+      let dragDepth = 0;
+      let rafId = 0;
+      let isPlaying = false;
+      let isEditMode = false;
+      let editableJson = null;
+      let selectedLayerInd = null;
+      let selectedLayerNode = null;
+      let selectedTargetNode = null;
+      let selectedShapeName = null;
+      let selectedLayerRef = null;
+      let selectedAssetLayerRef = null;
+      let layerNodeMap = new Map();
+      let layerIndNodeMap = new Map();
+      let clickTimer = null;
+      let selectedHierarchyKey = null;
+      let hierarchyItemMap = new Map();
+      let undoStack = [];
+
+      const updateUploadToggle = () => {
+        const hasPreview = Boolean(currentJsonText);
+        uploadToggleBtn.textContent = hasPreview ? "Clear" : "Upload";
+        if (hasPreview) {
+          uploadToggleBtn.classList.remove("lottie-primary");
+          uploadToggleBtn.classList.add("lottie-secondary-btn");
+        } else {
+          uploadToggleBtn.classList.add("lottie-primary");
+          uploadToggleBtn.classList.remove("lottie-secondary-btn");
+        }
+        editModeBtn.disabled = !hasPreview || isEditMode;
+      };
+
+      const clearPreview = () => {
+        if (lottieInstance) {
+          lottieInstance.destroy();
+          lottieInstance = null;
+        }
+        layerNodeMap = new Map();
+        layerIndNodeMap = new Map();
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = 0;
+        }
+        lottieStage.innerHTML = "";
+        togglePlayBtn.disabled = true;
+        togglePlayBtn.textContent = "Play";
+        frameScrub.value = 0;
+        frameScrub.max = 0;
+        currentFrame.textContent = "0";
+        totalFrames.textContent = "0";
+        isPlaying = false;
+        lottieDropzone.classList.add("is-empty");
+        lottieStage.classList.remove("has-selection");
+        if (selectedTargetNode) {
+          selectedTargetNode.classList.remove("lottie-selected-target");
+        }
+        clearSelectionOpacity();
+        selectedLayerInd = null;
+        selectedLayerNode = null;
+        selectedShapeName = null;
+        selectedTargetNode = null;
+        selectedAssetLayerRef = null;
+        selectedHierarchyKey = null;
+        selectionBox.style.display = "none";
+        updateUploadToggle();
+      };
+
+      const renderLottie = (animationData, label) => {
+        clearPreview();
+        lottieInstance = lottie.loadAnimation({
+          container: lottieStage,
+          renderer: "svg",
+          loop: true,
+          autoplay: !isEditMode,
+          animationData,
+        });
+        previewStatus.textContent = label;
+        previewStatusInline.textContent = label;
+
+        const startFrameLoop = () => {
+          if (!lottieInstance) return;
+          const tick = () => {
+            if (!lottieInstance) return;
+            const frame = Math.round(lottieInstance.currentFrame || 0);
+            if (!isScrubbing) frameScrub.value = frame;
+            currentFrame.textContent = String(frame);
+            if (selectedTargetNode) {
+              const measured = getMeasuredNode(selectedTargetNode);
+              if (measured.node && measured.rect) {
+                const stageRect = lottieStage.getBoundingClientRect();
+                const left = measured.rect.left - stageRect.left;
+                const top = measured.rect.top - stageRect.top;
+                selectionBox.style.display = "block";
+                selectionBox.style.transform = `translate(${left}px, ${top}px)`;
+                selectionBox.style.width = `${measured.rect.width}px`;
+                selectionBox.style.height = `${measured.rect.height}px`;
+              } else {
+                selectionBox.style.display = "none";
+              }
+            }
+            rafId = requestAnimationFrame(tick);
+          };
+          rafId = requestAnimationFrame(tick);
+        };
+
+        lottieInstance.addEventListener("DOMLoaded", () => {
+          layerNodeMap = new Map();
+          layerIndNodeMap = new Map();
+          const collectElements = (elements) => {
+            (elements || []).forEach((element) => {
+              const nodes = [element?.layerElement, element?.baseElement].filter(Boolean);
+              nodes.forEach((node) => {
+                const tag = node.tagName?.toLowerCase();
+                if (tag === "svg") return;
+                layerNodeMap.set(node, element);
+                if (element?.data?.ind != null) {
+                  layerIndNodeMap.set(element.data.ind, node);
+                }
+              });
+              if (element?.elements) {
+                collectElements(element.elements);
+              }
+            });
+          };
+          collectElements(lottieInstance.renderer?.elements || []);
+          const total = Math.max(0, Math.round(lottieInstance.getDuration(true)));
+          frameScrub.max = total ? total - 1 : 0;
+          totalFrames.textContent = total ? String(total) : "0";
+          togglePlayBtn.disabled = false;
+          if (isEditMode) {
+            lottieInstance.pause();
+            isPlaying = false;
+            togglePlayBtn.textContent = "Play";
+          } else {
+            isPlaying = true;
+            togglePlayBtn.textContent = "Pause";
+          }
+          startFrameLoop();
+          lottieDropzone.classList.remove("is-empty");
+          updateUploadToggle();
+        });
+      };
+
+      const hexToRgbFloat = (hex) => {
+        const raw = hex.replace("#", "");
+        const bigint = parseInt(raw, 16);
+        return [
+          ((bigint >> 16) & 255) / 255,
+          ((bigint >> 8) & 255) / 255,
+          (bigint & 255) / 255,
+          1,
+        ];
+      };
+
+      const rgbFloatToHex = (rgb) => {
+        const toHex = (val) => Math.max(0, Math.min(255, Math.round(val * 255))).toString(16).padStart(2, "0");
+        return `#${toHex(rgb[0])}${toHex(rgb[1])}${toHex(rgb[2])}`;
+      };
+
+      const getNodeRect = (node) => {
+        if (!node) return null;
+        const rects = [];
+        const addRectForNode = (el) => {
+          if (!el || typeof el.getBBox !== "function" || typeof el.getScreenCTM !== "function") return;
+          try {
+            const bbox = el.getBBox();
+            const ctm = el.getScreenCTM();
+            if (!ctm || !bbox || !bbox.width || !bbox.height) return;
+            const points = [
+              new DOMPoint(bbox.x, bbox.y),
+              new DOMPoint(bbox.x + bbox.width, bbox.y),
+              new DOMPoint(bbox.x + bbox.width, bbox.y + bbox.height),
+              new DOMPoint(bbox.x, bbox.y + bbox.height),
+            ].map((pt) => pt.matrixTransform(ctm));
+            const xs = points.map((p) => p.x);
+            const ys = points.map((p) => p.y);
+            rects.push({
+              left: Math.min(...xs),
+              right: Math.max(...xs),
+              top: Math.min(...ys),
+              bottom: Math.max(...ys),
+            });
+          } catch (error) {
+            // ignore
+          }
+        };
+
+        addRectForNode(node);
+        if (!rects.length) {
+          const walker = (el) => {
+            if (!el) return;
+            if (el instanceof SVGGraphicsElement) addRectForNode(el);
+            Array.from(el.children || []).forEach(walker);
+          };
+          walker(node);
+        }
+
+        if (rects.length) {
+          const left = Math.min(...rects.map((r) => r.left));
+          const right = Math.max(...rects.map((r) => r.right));
+          const top = Math.min(...rects.map((r) => r.top));
+          const bottom = Math.max(...rects.map((r) => r.bottom));
+          if (right > left && bottom > top) {
+            return { left, top, width: right - left, height: bottom - top };
+          }
+        }
+
+        const rect = node.getBoundingClientRect?.();
+        if (rect && rect.width && rect.height) {
+          return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+        }
+        return null;
+      };
+
+      const getMeasuredNode = (node) => {
+        let cursor = node;
+        while (cursor && cursor !== lottieStage) {
+          const rect = getNodeRect(cursor);
+          if (rect && rect.width > 1 && rect.height > 1) {
+            return { node: cursor, rect };
+          }
+          cursor = cursor.parentNode;
+        }
+        return { node: null, rect: null };
+      };
+
+      const findLayerIndForNode = (node) => {
+        let cursor = node;
+        while (cursor && cursor !== lottieStage) {
+          if (layerNodeMap.has(cursor)) {
+            return layerNodeMap.get(cursor)?.data?.ind ?? null;
+          }
+          cursor = cursor.parentNode;
+        }
+        return null;
+      };
+
+      const pickSvgElementAtPoint = (x, y) => {
+        const leafTags = new Set(["path", "rect", "circle", "ellipse", "polygon", "polyline", "text", "image"]);
+        const elements = document.elementsFromPoint(x, y);
+        const svgElements = elements.filter(
+          (el) => lottieStage.contains(el) && el instanceof SVGGraphicsElement && el.tagName.toLowerCase() !== "svg"
+        );
+        for (const el of svgElements) {
+          const tag = el.tagName.toLowerCase();
+          if (leafTags.has(tag)) return el;
+        }
+        let best = null;
+        let smallestArea = Infinity;
+        svgElements.forEach((el) => {
+          const rect = getNodeRect(el);
+          if (!rect) return;
+          const area = rect.width * rect.height;
+          if (area > 0 && area < smallestArea) {
+            smallestArea = area;
+            best = el;
+          }
+        });
+        return best;
+      };
+
+      const colorMatches = (a, b) =>
+        Math.abs(a[0] - b[0]) < 0.01 && Math.abs(a[1] - b[1]) < 0.01 && Math.abs(a[2] - b[2]) < 0.01;
+
+      const collectColors = (node, colors) => {
+        if (!node || typeof node !== "object") return;
+        if (Array.isArray(node)) {
+          node.forEach((child) => collectColors(child, colors));
+          return;
+        }
+        if (node.c && node.c.k) {
+          const k = node.c.k;
+          if (Array.isArray(k) && typeof k[0] === "number" && k.length >= 3) {
+            colors.add(rgbFloatToHex(k));
+          } else if (Array.isArray(k)) {
+            k.forEach((frame) => {
+              if (frame?.s && Array.isArray(frame.s)) {
+                colors.add(rgbFloatToHex(frame.s));
+              }
+            });
+          }
+        }
+        Object.values(node).forEach((value) => collectColors(value, colors));
+      };
+
+      const replaceColor = (node, fromRgb, toRgb) => {
+        if (!node || typeof node !== "object") return;
+        if (Array.isArray(node)) {
+          node.forEach((child) => replaceColor(child, fromRgb, toRgb));
+          return;
+        }
+        if (node.c && node.c.k) {
+          const k = node.c.k;
+          if (Array.isArray(k) && typeof k[0] === "number" && k.length >= 3) {
+            if (colorMatches(k, fromRgb)) {
+              node.c.k = [...toRgb];
+            }
+          } else if (Array.isArray(k)) {
+            k.forEach((frame) => {
+              if (frame?.s && Array.isArray(frame.s) && colorMatches(frame.s, fromRgb)) {
+                frame.s = [...toRgb];
+              }
+            });
+          }
+        }
+        Object.values(node).forEach((value) => replaceColor(value, fromRgb, toRgb));
+      };
+
+      const updatePaletteFromJson = () => {
+        if (!editableJson) return;
+        const colors = new Set();
+        collectColors(editableJson, colors);
+        renderPalette([...colors]);
+      };
+
+      const cssEscape = (value) => {
+        if (window.CSS?.escape) return CSS.escape(value);
+        return value.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+      };
+
+      const findNodeForLayerInd = (layerInd) => {
+        return layerIndNodeMap.get(layerInd) || null;
+      };
+
+      const findNodeForLayerName = (name) => {
+        if (!name) return null;
+        return lottieStage.querySelector(`[data-name="${cssEscape(name)}"]`);
+      };
+
+      const findNodeByLabel = (label) => {
+        if (!label) return null;
+        const nodes = lottieStage.querySelectorAll("[data-name]");
+        const lower = label.toLowerCase();
+        for (const node of nodes) {
+          const name = node.getAttribute("data-name");
+          if (name && name.toLowerCase().includes(lower)) return node;
+        }
+        return null;
+      };
+
+      const findNodeByLayerLabel = (label) => {
+        if (!label) return null;
+        const lower = label.toLowerCase();
+        for (const [node, element] of layerNodeMap.entries()) {
+          const nm = element?.data?.nm;
+          if (nm && nm.toLowerCase().includes(lower)) return node;
+        }
+        return null;
+      };
+
+      const getSvgRoot = () => lottieStage.querySelector("svg");
+
+      const clearSelectionOpacity = () => {
+        const svg = getSvgRoot();
+        if (!svg) return;
+        svg.querySelectorAll("*").forEach((el) => {
+          el.style.opacity = "";
+        });
+      };
+
+      const applySelectionOpacity = (target) => {
+        const svg = getSvgRoot();
+        if (!svg) return;
+        svg.querySelectorAll("*").forEach((el) => {
+          el.style.opacity = "0.5";
+        });
+        if (target) {
+          target.style.opacity = "1";
+          target.querySelectorAll?.("*").forEach((el) => {
+            el.style.opacity = "1";
+          });
+        }
+      };
+
+      const makeHierarchyKey = (layerInd, shapeName = null) =>
+        shapeName ? `layer:${layerInd}:shape:${shapeName}` : `layer:${layerInd}`;
+
+      const setSelectedHierarchy = (key) => {
+        selectedHierarchyKey = key;
+        hierarchyItemMap.forEach((row, rowKey) => {
+          row.classList.toggle("is-selected", rowKey === key);
+        });
+      };
+
+      const findNodeForShapeName = (name) => {
+        if (!name) return null;
+        return lottieStage.querySelector(`[data-name="${cssEscape(name)}"]`);
+      };
+
+      const buildHierarchyList = () => {
+        if (!editableJson) return;
+        hierarchyList.innerHTML = "";
+        hierarchyItemMap = new Map();
+        const assetMap = new Map((editableJson.assets || []).map((asset) => [String(asset.id), asset]));
+
+        const createNode = (container, label, depth, onClick, childrenBuilder, onToggle) => {
+          const row = document.createElement("div");
+          row.className = "lottie-tree-row";
+          row.style.setProperty("--depth", depth);
+
+          if (childrenBuilder) {
+            const chevron = document.createElement("button");
+            chevron.type = "button";
+            chevron.className = "lottie-tree-chevron";
+            chevron.innerHTML = "<span>▾</span>";
+            chevron.addEventListener("click", (event) => {
+              event.stopPropagation();
+              row.classList.toggle("collapsed");
+            });
+            row.classList.add("collapsed");
+            row.appendChild(chevron);
+          } else {
+            const spacer = document.createElement("span");
+            spacer.className = "lottie-tree-spacer";
+            row.appendChild(spacer);
+          }
+
+          const labelBtn = document.createElement("button");
+          labelBtn.type = "button";
+          labelBtn.className = "lottie-tree-item";
+          labelBtn.textContent = label;
+          labelBtn.addEventListener("click", onClick);
+          row.appendChild(labelBtn);
+
+          const eyeBtn = document.createElement("button");
+          eyeBtn.type = "button";
+          eyeBtn.className = "lottie-tree-eye";
+          eyeBtn.innerHTML =
+            '<svg viewBox="0 0 20 20" width="24" height="24" aria-hidden="true"><path d="M2 10s3-5 8-5 8 5 8 5-3 5-8 5-8-5-8-5Z" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="10" cy="10" r="2.6" fill="currentColor"/></svg>';
+          eyeBtn.addEventListener("click", (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+            onToggle?.(eyeBtn, row);
+          });
+          eyeBtn.addEventListener("pointerdown", (event) => {
+            event.stopPropagation();
+          });
+          row.appendChild(eyeBtn);
+          container.appendChild(row);
+
+          if (childrenBuilder) {
+            const childrenWrap = document.createElement("div");
+            childrenWrap.className = "lottie-tree-children";
+            container.appendChild(childrenWrap);
+            childrenBuilder(childrenWrap, depth + 1);
+          }
+        };
+
+      const walkShapes = (shapes, container, depth, layerObj) => {
+        if (!Array.isArray(shapes)) return;
+        shapes.forEach((shape) => {
+          const label = shape.nm || shape.ty || "Shape";
+          const hasChildren = Array.isArray(shape.it) && shape.it.length;
+          const key = makeHierarchyKey((layerObj?.ind ?? "x"), shape.nm || label);
+          createNode(
+            container,
+            label,
+            depth,
+            () => {
+              selectedLayerRef = layerObj;
+              selectedAssetLayerRef = null;
+              const node =
+                findNodeForShapeName(shape.nm) ||
+                findNodeForLayerName(layerObj?.nm) ||
+                findNodeForLayerInd(layerObj?.ind) ||
+                findNodeByLabel(label) ||
+                findNodeByLayerLabel(label);
+              selectTargetNode(node, layerObj?.ind ?? null, shape.nm || null);
+              setSelectedHierarchy(key);
+            },
+              hasChildren ? (innerWrap, nextDepth) => walkShapes(shape.it, innerWrap, nextDepth, layerObj) : null,
+              (eyeBtn, row) => {
+                const hidden = !(shape.hd || false);
+                shape.hd = hidden;
+                row.classList.toggle("is-hidden", hidden);
+                eyeBtn.classList.toggle("is-off", hidden);
+                currentJsonText = JSON.stringify(editableJson);
+                renderLottie(editableJson, previewStatus.textContent);
+                updatePaletteFromJson();
+              }
+            );
+            if (shape.hd) {
+              container.lastElementChild.classList.add("is-hidden");
+              container.lastElementChild.querySelector(".lottie-tree-eye")?.classList.add("is-off");
+            }
+            hierarchyItemMap.set(key, container.lastElementChild);
+          });
+        };
+
+        const walkLayers = (layers, container, depth) => {
+          layers?.forEach((layer) => {
+            const label = layer.nm || `Layer ${layer.ind || ""}`.trim();
+            const asset = layer.refId != null ? assetMap.get(String(layer.refId)) : null;
+            const hasChildren =
+              (layer.shapes && layer.shapes.length) || (asset?.layers && asset.layers.length);
+            const key = makeHierarchyKey(layer.ind ?? "x", null);
+            createNode(
+              container,
+              label,
+              depth,
+              () => {
+                selectedLayerRef = layer;
+                selectedAssetLayerRef = null;
+                const node =
+                  findNodeForLayerInd(layer.ind) ||
+                  findNodeForLayerName(layer.nm) ||
+                  findNodeByLabel(label) ||
+                  findNodeByLayerLabel(label);
+                selectTargetNode(node, layer.ind, null);
+                setSelectedHierarchy(key);
+              },
+              hasChildren
+                ? (innerWrap, nextDepth) => {
+                    if (layer.shapes) walkShapes(layer.shapes, innerWrap, nextDepth, layer);
+                    if (asset?.layers) {
+                      asset.layers.forEach((assetLayer) => {
+                        const assetLabel = assetLayer.nm || `Layer ${assetLayer.ind || ""}`.trim();
+                        const assetKey = makeHierarchyKey(assetLayer.ind ?? "x", null);
+                        createNode(
+                          innerWrap,
+                          assetLabel,
+                          nextDepth,
+                          () => {
+                            selectedLayerRef = layer;
+                            selectedAssetLayerRef = assetLayer;
+                            const node =
+                              findNodeForLayerInd(assetLayer.ind) ||
+                              findNodeForLayerName(assetLayer.nm) ||
+                              findNodeByLabel(assetLabel) ||
+                              findNodeByLayerLabel(assetLabel);
+                            selectTargetNode(node, assetLayer.ind, null);
+                            setSelectedHierarchy(assetKey);
+                          },
+                          assetLayer.shapes
+                            ? (shapeWrap, deeper) =>
+                                walkShapes(assetLayer.shapes, shapeWrap, deeper, assetLayer)
+                            : null,
+                          (eyeBtn, row) => {
+                            const hidden = !(assetLayer.hd || false);
+                            assetLayer.hd = hidden;
+                            row.classList.toggle("is-hidden", hidden);
+                            eyeBtn.classList.toggle("is-off", hidden);
+                            currentJsonText = JSON.stringify(editableJson);
+                            renderLottie(editableJson, previewStatus.textContent);
+                            updatePaletteFromJson();
+                          }
+                        );
+                        if (assetLayer.hd) {
+                          innerWrap.lastElementChild.classList.add("is-hidden");
+                          innerWrap.lastElementChild.querySelector(".lottie-tree-eye")?.classList.add("is-off");
+                        }
+                        hierarchyItemMap.set(assetKey, innerWrap.lastElementChild);
+                      });
+                    }
+                  }
+                : null,
+              (eyeBtn, row) => {
+                const hidden = !(layer.hd || false);
+                layer.hd = hidden;
+                row.classList.toggle("is-hidden", hidden);
+                eyeBtn.classList.toggle("is-off", hidden);
+                currentJsonText = JSON.stringify(editableJson);
+                renderLottie(editableJson, previewStatus.textContent);
+                updatePaletteFromJson();
+              }
+            );
+            if (layer.hd) {
+              container.lastElementChild.classList.add("is-hidden");
+              container.lastElementChild.querySelector(".lottie-tree-eye")?.classList.add("is-off");
+            }
+            hierarchyItemMap.set(key, container.lastElementChild);
+          });
+        };
+
+        walkLayers(editableJson.layers, hierarchyList, 0);
+        if (selectedHierarchyKey) setSelectedHierarchy(selectedHierarchyKey);
+      };
+
+      const removeShapeByName = (shapes, name) => {
+        if (!Array.isArray(shapes)) return false;
+        let removed = false;
+        for (let i = shapes.length - 1; i >= 0; i -= 1) {
+          const shape = shapes[i];
+          if (shape?.nm === name) {
+            shapes.splice(i, 1);
+            removed = true;
+            continue;
+          }
+          if (shape?.it) {
+            const innerRemoved = removeShapeByName(shape.it, name);
+            removed = removed || innerRemoved;
+          }
+        }
+        return removed;
+      };
+
+      const removeLayerFromJson = (layerObj) => {
+        if (!layerObj || !editableJson) return false;
+        const removeFrom = (layers) => {
+          if (!Array.isArray(layers)) return false;
+          const idx = layers.indexOf(layerObj);
+          if (idx !== -1) {
+            layers.splice(idx, 1);
+            return true;
+          }
+          return false;
+        };
+        if (removeFrom(editableJson.layers)) return true;
+        for (const asset of editableJson.assets || []) {
+          if (removeFrom(asset.layers)) return true;
+        }
+        return false;
+      };
+
+      const selectTargetNode = (node, layerInd, shapeName = null) => {
+        if (selectedTargetNode) {
+          selectedTargetNode.classList.remove("lottie-selected-target");
+        }
+        selectedLayerInd = layerInd ?? null;
+        selectedShapeName = shapeName;
+        selectedHierarchyKey = makeHierarchyKey(selectedLayerInd ?? "x", selectedShapeName);
+        setSelectedHierarchy(selectedHierarchyKey);
+        if (!shapeName && selectedLayerInd && editableJson) {
+          selectedLayerRef =
+            editableJson.layers?.find((item) => item.ind === selectedLayerInd) || selectedLayerRef;
+        }
+        if (lottieInstance) {
+          lottieInstance.pause();
+          isPlaying = false;
+          togglePlayBtn.textContent = "Play";
+        }
+        const measured = getMeasuredNode(node);
+        selectedTargetNode = measured.node;
+        if (!measured.node || !measured.rect) {
+          lottieStage.classList.remove("has-selection");
+          selectionBox.style.display = "none";
+          clearSelectionOpacity();
+          return;
+        }
+        selectedTargetNode.classList.add("lottie-selected-target");
+        lottieStage.classList.add("has-selection");
+        applySelectionOpacity(selectedTargetNode);
+        const stageRect = lottieStage.getBoundingClientRect();
+        selectionBox.style.display = "block";
+        selectionBox.style.transform = `translate(${measured.rect.left - stageRect.left}px, ${
+          measured.rect.top - stageRect.top
+        }px)`;
+        selectionBox.style.width = `${measured.rect.width}px`;
+        selectionBox.style.height = `${measured.rect.height}px`;
+      };
+
+      const renderPalette = (colors) => {
+        paletteList.innerHTML = "";
+        colors.forEach((hex) => {
+          const row = document.createElement("div");
+          row.className = "lottie-palette-row";
+          const swatch = document.createElement("button");
+          swatch.type = "button";
+          swatch.className = "lottie-swatch";
+          swatch.style.background = hex;
+
+          const colorInput = document.createElement("input");
+          colorInput.type = "color";
+          colorInput.value = hex;
+          colorInput.className = "lottie-color-input";
+
+          const hexInput = document.createElement("input");
+          hexInput.type = "text";
+          hexInput.value = hex.toUpperCase();
+          hexInput.className = "lottie-hex-input";
+
+          const applyColorChange = (newHex) => {
+            const fromRgb = hexToRgbFloat(hex);
+            const toRgb = hexToRgbFloat(newHex);
+            replaceColor(editableJson, fromRgb, toRgb);
+            hex = newHex;
+            swatch.style.background = newHex;
+            colorInput.value = newHex;
+            hexInput.value = newHex.toUpperCase();
+            currentJsonText = JSON.stringify(editableJson);
+            renderLottie(editableJson, previewStatus.textContent);
+          };
+
+          swatch.addEventListener("click", () => colorInput.click());
+          colorInput.addEventListener("input", (event) => applyColorChange(event.target.value));
+          hexInput.addEventListener("change", (event) => {
+            const val = event.target.value.trim();
+            if (/^#?[0-9A-Fa-f]{6}$/.test(val)) {
+              applyColorChange(val.startsWith("#") ? val : `#${val}`);
+            } else {
+              hexInput.value = hex.toUpperCase();
+            }
+          });
+
+          row.append(swatch, hexInput, colorInput);
+          paletteList.appendChild(row);
+        });
+      };
+
+      const enterEditMode = () => {
+        if (!currentJsonText) return;
+        editableJson = JSON.parse(currentJsonText);
+        isEditMode = true;
+        document.body.classList.add("edit-mode");
+        editModeBtn.textContent = "Editing";
+        editModeBtn.disabled = true;
+        if (lottieInstance) {
+          lottieInstance.pause();
+          isPlaying = false;
+          togglePlayBtn.textContent = "Play";
+        }
+        buildHierarchyList();
+        updatePaletteFromJson();
+      };
+
+      const exitEditMode = () => {
+        isEditMode = false;
+        document.body.classList.remove("edit-mode");
+        editModeBtn.textContent = "Edit";
+        lottieStage.classList.remove("has-selection");
+        if (selectedTargetNode) {
+          selectedTargetNode.classList.remove("lottie-selected-target");
+        }
+        selectedTargetNode = null;
+        selectedShapeName = null;
+        selectedHierarchyKey = null;
+        hierarchyItemMap = new Map();
+        selectionBox.style.display = "none";
+        updateDownloadOptions();
+        updateUploadToggle();
+      };
+
+      const extractLottieJson = async (file) => {
+        const zip = await JSZip.loadAsync(file);
+        let manifest = null;
+        if (zip.file("manifest.json")) {
+          const manifestText = await zip.file("manifest.json").async("string");
+          try {
+            manifest = JSON.parse(manifestText);
+          } catch (error) {
+            manifest = null;
+          }
+        }
+
+        let animationPath = null;
+        if (manifest?.animations?.length) {
+          const animationId = manifest.animations[0].id || "animation";
+          animationPath = `animations/${animationId}.json`;
+        }
+
+        if (!animationPath || !zip.file(animationPath)) {
+          const jsonCandidates = Object.keys(zip.files).filter((key) =>
+            key.startsWith("animations/") && key.endsWith(".json")
+          );
+          animationPath = jsonCandidates[0] || null;
+        }
+
+        if (!animationPath || !zip.file(animationPath)) {
+          throw new Error("No animation JSON found in .lottie file.");
+        }
+
+        const jsonText = await zip.file(animationPath).async("string");
+        return JSON.parse(jsonText);
+      };
+
+      const handlePreviewFile = async (file) => {
+        if (!file) return;
+        const name = file.name || "animation";
+        currentFileName = name.replace(/\.[^.]+$/, "");
+
+        if (name.toLowerCase().endsWith(".json")) {
+          const text = await file.text();
+          currentJsonText = text;
+          try {
+            const json = JSON.parse(text);
+            renderLottie(json, `Loaded JSON: ${name}`);
+            updateDownloadOptions();
+            updateUploadToggle();
+          } catch (error) {
+            currentJsonText = "";
+            previewStatus.textContent = "Invalid JSON file.";
+            previewStatusInline.textContent = "Invalid JSON file.";
+            updateDownloadOptions();
+            updateUploadToggle();
+          }
+        } else if (name.toLowerCase().endsWith(".lottie")) {
+          try {
+            const json = await extractLottieJson(file);
+            currentJsonText = JSON.stringify(json);
+            renderLottie(json, `Loaded Lottie: ${name}`);
+            updateDownloadOptions();
+            updateUploadToggle();
+          } catch (error) {
+            currentJsonText = "";
+            previewStatus.textContent = "Could not read .lottie file.";
+            previewStatusInline.textContent = "Could not read .lottie file.";
+            updateDownloadOptions();
+            updateUploadToggle();
+          }
+        } else {
+          previewStatus.textContent = "Unsupported file type.";
+          previewStatusInline.textContent = "Unsupported file type.";
+        }
+        lottieFileInput.value = "";
+      };
+
+      lottieDropzone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        lottieDropzone.classList.add("drag-over");
+      });
+      lottieDropzone.addEventListener("dragleave", () => lottieDropzone.classList.remove("drag-over"));
+      lottieDropzone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        lottieDropzone.classList.remove("drag-over");
+        const file = event.dataTransfer.files[0];
+        if (file) handlePreviewFile(file);
+      });
+      lottieFileInput.addEventListener("change", (event) => {
+        if (event.target.files[0]) handlePreviewFile(event.target.files[0]);
+      });
+
+      const buildManifest = () => ({
+        generator: "Lottie Canvas",
+        version: "1.0",
+        revision: 1,
+        animations: [
+          {
+            id: "animation",
+            speed: 1,
+            loop: true,
+            autoplay: true,
+          },
+        ],
+      });
+
+      const buildLottieBlob = async (jsonText) => {
+        const zip = new JSZip();
+        zip.file("manifest.json", JSON.stringify(buildManifest(), null, 2));
+        zip.folder("animations").file("animation.json", jsonText);
+        return zip.generateAsync({
+          type: "blob",
+          compression: "DEFLATE",
+          compressionOptions: { level: 9 },
+        });
+      };
+
+      const fmtBytes = (bytes) => {
+        if (!bytes) return "—";
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+      };
+
+      const updateDownloadOptions = async () => {
+        if (!currentJsonText) {
+          downloadJsonBtn.disabled = true;
+          downloadLottieBtn.disabled = true;
+          jsonSize.textContent = "—";
+          lottieSize.textContent = "—";
+          return;
+        }
+
+        downloadJsonBtn.disabled = false;
+        downloadLottieBtn.disabled = false;
+        jsonSize.textContent = fmtBytes(new Blob([currentJsonText]).size);
+
+        const token = ++sizeToken;
+        try {
+          const lottieBlob = await buildLottieBlob(currentJsonText);
+          if (token !== sizeToken) return;
+          lottieSize.textContent = fmtBytes(lottieBlob.size);
+        } catch (error) {
+          lottieSize.textContent = "—";
+        }
+      };
+
+      downloadJsonBtn.addEventListener("click", () => {
+        if (!currentJsonText) return;
+        const blob = new Blob([currentJsonText], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${currentFileName || "animation"}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(link.href), 500);
+      });
+
+      downloadLottieBtn.addEventListener("click", async () => {
+        if (!currentJsonText) return;
+        const blob = await buildLottieBlob(currentJsonText);
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${currentFileName || "animation"}.lottie`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(link.href), 500);
+      });
+
+      uploadToggleBtn.addEventListener("click", () => {
+        if (currentJsonText) {
+          currentJsonText = "";
+          currentFileName = "animation";
+          clearPreview();
+          previewStatus.textContent = "Awaiting a file.";
+          previewStatusInline.textContent = "Awaiting a file.";
+          updateDownloadOptions();
+          exitEditMode();
+        } else {
+          lottieFileInput.value = "";
+          lottieFileInput.click();
+        }
+      });
+
+      editModeBtn.addEventListener("click", () => {
+        if (isEditMode || !currentJsonText) return;
+        enterEditMode();
+      });
+
+      saveEditBtn.addEventListener("click", () => {
+        if (!isEditMode || !editableJson) return;
+        currentJsonText = JSON.stringify(editableJson);
+        renderLottie(editableJson, previewStatus.textContent);
+        exitEditMode();
+      });
+
+      togglePlayBtn.addEventListener("click", () => {
+        if (!lottieInstance) return;
+        if (isPlaying) {
+          lottieInstance.pause();
+          togglePlayBtn.textContent = "Play";
+          isPlaying = false;
+        } else {
+          lottieInstance.play();
+          togglePlayBtn.textContent = "Pause";
+          isPlaying = true;
+        }
+      });
+
+      frameScrub.addEventListener("input", (event) => {
+        if (!lottieInstance) return;
+        isScrubbing = true;
+        const frame = Number(event.target.value);
+        lottieInstance.goToAndStop(frame, true);
+        currentFrame.textContent = String(frame);
+      });
+
+      frameScrub.addEventListener("change", () => {
+        isScrubbing = false;
+      });
+
+      lottieStage.addEventListener("click", (event) => {
+        if (!isEditMode || !lottieInstance?.renderer?.elements) return;
+        if (clickTimer) clearTimeout(clickTimer);
+        clickTimer = setTimeout(() => {
+          const svgTarget = pickSvgElementAtPoint(event.clientX, event.clientY);
+          if (!svgTarget) {
+            selectedLayerInd = null;
+            if (selectedTargetNode) {
+              selectedTargetNode.classList.remove("lottie-selected-target");
+            }
+            selectedTargetNode = null;
+            lottieStage.classList.remove("has-selection");
+            selectionBox.style.display = "none";
+            return;
+          }
+          const layerInd = findLayerIndForNode(svgTarget);
+          selectedLayerNode = svgTarget;
+          selectTargetNode(svgTarget, layerInd, svgTarget.closest("[data-name]")?.getAttribute("data-name") || null);
+        }, 220);
+      });
+
+      lottieStage.addEventListener("dblclick", (event) => {
+        if (!isEditMode || !lottieInstance?.renderer?.elements) return;
+        if (clickTimer) clearTimeout(clickTimer);
+        clickTimer = null;
+        const svgTarget = pickSvgElementAtPoint(event.clientX, event.clientY);
+        if (!svgTarget) return;
+        const layerInd = findLayerIndForNode(svgTarget);
+        const namedNode = svgTarget.closest("[data-name]");
+        const shapeName = namedNode?.getAttribute("data-name") || null;
+        selectTargetNode(namedNode || svgTarget, layerInd, shapeName);
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (!isEditMode) return;
+        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+          return;
+        }
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z") {
+          event.preventDefault();
+          const snapshot = undoStack.pop();
+          if (!snapshot) return;
+          editableJson = JSON.parse(snapshot);
+          currentJsonText = snapshot;
+          renderLottie(editableJson, previewStatus.textContent);
+          buildHierarchyList();
+          updatePaletteFromJson();
+          selectedLayerInd = null;
+          selectedLayerNode = null;
+          selectedTargetNode = null;
+          selectedShapeName = null;
+          selectedLayerRef = null;
+          selectedAssetLayerRef = null;
+          selectedHierarchyKey = null;
+          clearSelectionOpacity();
+          lottieStage.classList.remove("has-selection");
+          selectionBox.style.display = "none";
+          return;
+        }
+        if (event.key !== "Delete" && event.key !== "Backspace") return;
+        if (!editableJson) return;
+        undoStack.push(JSON.stringify(editableJson));
+        const layer =
+          selectedAssetLayerRef ||
+          selectedLayerRef ||
+          editableJson.layers?.find((item) => item.ind === selectedLayerInd) ||
+          null;
+        if (!layer && !selectedShapeName) return;
+        if (selectedShapeName) {
+          const removed = layer ? removeShapeByName(layer.shapes, selectedShapeName) : false;
+          if (!removed && layer) {
+            removeLayerFromJson(layer);
+          }
+        } else {
+          if (layer) {
+            const removed = removeLayerFromJson(layer);
+            if (!removed) {
+              layer.hd = true;
+            }
+          }
+        }
+        currentJsonText = JSON.stringify(editableJson);
+        renderLottie(editableJson, previewStatus.textContent);
+        buildHierarchyList();
+        updatePaletteFromJson();
+        selectedLayerInd = null;
+        selectedLayerNode = null;
+        if (selectedTargetNode) {
+          selectedTargetNode.classList.remove("lottie-selected-target");
+        }
+        clearSelectionOpacity();
+        selectedTargetNode = null;
+        selectedShapeName = null;
+        selectedLayerRef = null;
+        selectedAssetLayerRef = null;
+        selectedHierarchyKey = null;
+        lottieStage.classList.remove("has-selection");
+        selectionBox.style.display = "none";
+      });
+
+      const syncNavOffset = () => {
+        const navBottom = Math.max(
+          siteTitle?.getBoundingClientRect().bottom || 0,
+          topMenu?.getBoundingClientRect().bottom || 0
+        );
+        document.documentElement.style.setProperty("--nav-offset", `${Math.ceil(navBottom)}px`);
+      };
+
+      window.addEventListener("resize", syncNavOffset);
+      window.addEventListener("load", syncNavOffset);
+      syncNavOffset();
+
+      const activateDragState = () => {
+        lottieDropzone.classList.add("drag-over");
+      };
+
+      const clearDragState = () => {
+        lottieDropzone.classList.remove("drag-over");
+      };
+
+      document.addEventListener("dragenter", (event) => {
+        if (!event.dataTransfer) return;
+        dragDepth += 1;
+        activateDragState();
+      });
+
+      document.addEventListener("dragleave", (event) => {
+        if (!event.dataTransfer) return;
+        dragDepth = Math.max(0, dragDepth - 1);
+        if (dragDepth === 0) clearDragState();
+      });
+
+      document.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        activateDragState();
+      });
+
+      document.addEventListener("drop", (event) => {
+        event.preventDefault();
+        dragDepth = 0;
+        clearDragState();
+        const file = event.dataTransfer?.files?.[0];
+        if (file) handlePreviewFile(file);
+      });
+
+      updateUploadToggle();
+      lottieDropzone.classList.add("is-empty");
+      })();
+    </script>
+  </body>
+</html>
