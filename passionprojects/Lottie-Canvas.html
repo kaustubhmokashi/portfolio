@@ -8,22 +8,22 @@
     <meta
       property="og:description"
       content="Preview .lottie and .json files, convert JSON to Lottie, and generate a quick animation." />
-    <meta property="og:image" content="./Lottie-Canvas/thumbnail.svg" />
+    <meta property="og:image" content="../thumbnail.svg" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Lottie Canvas — Kaustubh Mokashi" />
     <meta
       name="twitter:description"
       content="Preview .lottie and .json files, convert JSON to Lottie, and generate a quick animation." />
-    <meta name="twitter:image" content="./Lottie-Canvas/thumbnail.svg" />
+    <meta name="twitter:image" content="../thumbnail.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Jersey+15&display=swap"
       rel="stylesheet" />
-    <link rel="icon" type="image/svg+xml" href="./Lottie-Canvas/favicon.svg?v=1" />
-    <link rel="stylesheet" href="./Lottie-Canvas/styles.css?v=1.0.9" />
-    <link rel="stylesheet" href="../styles.css?v=1.0.9" />
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg?v=1" />
+    <link rel="stylesheet" href="./Lottie-Canvas/styles.css?v=1.0.10" />
+    <link rel="stylesheet" href="../styles.css?v=1.0.10" />
   </head>
   <body class="page-passion">
     <a class="site-title site-title-link" href="https://www.kaustubhmokashi.com">KAUSTUBH MOKASHI</a>
@@ -56,7 +56,6 @@
         <div class="lottie-preview-panel" id="lottieDropzone">
           <div class="lottie-preview-header">
             <div class="lottie-preview-title">
-              <span class="tag">Upload</span>
               <div class="lottie-title-row">
                 <h1 class="page-heading">Lottie Preview</h1>
                 <div class="lottie-status-inline" id="previewStatusInline">Awaiting a file.</div>
@@ -146,17 +145,21 @@
             </div>
           </div>
 
-          <div class="lottie-edit-panel" aria-label="Edit colors">
+          <div class="lottie-edit-panel" aria-label="Edit animation">
             <div class="lottie-convert-header">
               <span class="tag">Edit</span>
-              <h2>Color Palette</h2>
-              <p>Pick a color to update it everywhere in the animation.</p>
+              <h2>Edit animation</h2>
+              <p>You can hide layers, or delete them.</p>
             </div>
             <div class="lottie-hierarchy-block">
               <div class="lottie-hierarchy-title">Hierarchy</div>
               <div class="lottie-hierarchy" id="hierarchyList"></div>
             </div>
             <div class="lottie-edit-hint">Select an element, then press Delete or Backspace to remove it.</div>
+            <div class="lottie-color-header">
+              <h3>Color Palette</h3>
+              <p>Pick a color to update it everywhere in the animation.</p>
+            </div>
             <div class="lottie-palette" id="paletteList"></div>
             <button class="lottie-primary lottie-save-btn" id="saveEditBtn" type="button">Save</button>
           </div>
@@ -226,9 +229,9 @@
       <span class="return-cursor-prompt"></span>
     </div>
 
-    <script src="../version.js?v=1.0.9"></script>
-    <script src="../script.js?v=1.0.9"></script>
-    <script src="./Lottie-Canvas/script.js?v=1.0.9"></script>
+    <script src="../version.js?v=1.0.10"></script>
+    <script src="../script.js?v=1.0.10"></script>
+    <script src="./Lottie-Canvas/script.js?v=1.0.10"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
     <script>
@@ -280,13 +283,15 @@
 
       const updateUploadToggle = () => {
         const hasPreview = Boolean(currentJsonText);
-        uploadToggleBtn.textContent = hasPreview ? "Clear" : "Upload";
-        if (hasPreview) {
-          uploadToggleBtn.classList.remove("lottie-primary");
-          uploadToggleBtn.classList.add("lottie-secondary-btn");
-        } else {
-          uploadToggleBtn.classList.add("lottie-primary");
-          uploadToggleBtn.classList.remove("lottie-secondary-btn");
+        if (uploadToggleBtn) {
+          uploadToggleBtn.textContent = hasPreview ? "Clear" : "Upload";
+          if (hasPreview) {
+            uploadToggleBtn.classList.remove("lottie-primary");
+            uploadToggleBtn.classList.add("lottie-secondary-btn");
+          } else {
+            uploadToggleBtn.classList.add("lottie-primary");
+            uploadToggleBtn.classList.remove("lottie-secondary-btn");
+          }
         }
         editModeBtn.disabled = !hasPreview || isEditMode;
       };
@@ -1159,20 +1164,22 @@
         setTimeout(() => URL.revokeObjectURL(link.href), 500);
       });
 
-      uploadToggleBtn.addEventListener("click", () => {
-        if (currentJsonText) {
-          currentJsonText = "";
-          currentFileName = "animation";
-          clearPreview();
-          previewStatus.textContent = "Awaiting a file.";
-          previewStatusInline.textContent = "Awaiting a file.";
-          updateDownloadOptions();
-          exitEditMode();
-        } else {
-          lottieFileInput.value = "";
-          lottieFileInput.click();
-        }
-      });
+      if (uploadToggleBtn) {
+        uploadToggleBtn.addEventListener("click", () => {
+          if (currentJsonText) {
+            currentJsonText = "";
+            currentFileName = "animation";
+            clearPreview();
+            previewStatus.textContent = "Awaiting a file.";
+            previewStatusInline.textContent = "Awaiting a file.";
+            updateDownloadOptions();
+            exitEditMode();
+          } else {
+            lottieFileInput.value = "";
+            lottieFileInput.click();
+          }
+        });
+      }
 
       editModeBtn.addEventListener("click", () => {
         if (isEditMode || !currentJsonText) return;

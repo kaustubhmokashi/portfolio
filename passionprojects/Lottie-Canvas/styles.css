@@ -99,7 +99,7 @@
 }
 
 .lottie-secondary-btn {
-  border-radius: 999px;
+  border-radius: 2px;
   padding: 8px 14px;
   font-family: "Inter", sans-serif;
   font-size: 13px;
@@ -278,7 +278,7 @@
 
 .lottie-primary,
 .lottie-secondary {
-  border-radius: 999px;
+  border-radius: 2px;
   padding: 10px 18px;
   font-family: "Inter", sans-serif;
   font-size: 14px;
@@ -371,6 +371,29 @@ body.lightbox-open {
   height: 100%;
 }
 
+.lottie-color-header {
+  margin-top: 8px;
+}
+
+.lottie-color-header h3 {
+  margin: 18px 0 6px;
+  font-family: "Jersey 15", sans-serif;
+  font-size: 22px;
+  color: #ececec;
+}
+
+.lottie-color-header p {
+  margin: 0;
+  color: rgba(236, 236, 236, 0.7);
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: "Inter", sans-serif;
+}
+
+.lottie-color-header + .lottie-palette {
+  margin-top: 12px;
+}
+
 body.edit-mode .lottie-download-panel {
   display: none;
 }
@@ -426,6 +449,7 @@ body.edit-mode .lottie-edit-panel {
   bottom: 0;
   width: 100%;
   margin-top: auto;
+  border-radius: 2px;
 }
 
 .lottie-hierarchy-block {
@@ -1252,6 +1276,7 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
   letter-spacing: 0;
   margin: 0;
   padding: 0;
+  border-radius: 2px;
 }
 
 .case-study-deck-button:hover {
@@ -1332,7 +1357,7 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
     pointer-events: auto;
     background: rgba(236, 236, 236, 0.06);
     border: none;
-    border-radius: 6px;
+    border-radius: 2px;
     padding: 10px 16px;
   }
   .case-study-deck-stage {
@@ -1700,7 +1725,7 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
 
 .posterize-btn {
   padding: 12px 18px;
-  border-radius: 10px;
+  border-radius: 2px;
   border: none;
   font-size: 13px;
   font-weight: 600;
@@ -1795,14 +1820,14 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
   gap: 6px;
   background: rgba(236, 236, 236, 0.06);
   padding: 4px;
-  border-radius: 10px;
+  border-radius: 2px;
 }
 
 .posterize-toggle-btn {
   padding: 6px 12px;
   border: none;
   background: transparent;
-  border-radius: 8px;
+  border-radius: 2px;
   cursor: pointer;
   font-weight: 600;
   color: rgba(236, 236, 236, 0.6);
@@ -1948,6 +1973,7 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
 .posterize-btn-small {
   padding: 8px 12px;
   font-size: 11px;
+  border-radius: 2px;
 }
 
 @media (max-width: 1024px) {
@@ -2379,7 +2405,7 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
   background: #ececec;
   color: #050505;
   border: none;
-  border-radius: 12px;
+  border-radius: 2px;
   padding: 16px 32px;
   font-family: "Inter", sans-serif;
   font-size: 14px;
@@ -2703,6 +2729,7 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
   line-height: 1;
   text-transform: uppercase;
   cursor: pointer;
+  border-radius: 2px;
 }
 
 .project-lock-error {
