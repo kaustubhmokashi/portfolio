@@ -85,6 +85,17 @@
             <span class="case-study-deck-label">Previous</span>
           </button>
           <button
+            class="case-study-deck-button case-study-deck-fullscreen"
+            type="button"
+            data-deck-fullscreen
+            aria-label="Toggle fullscreen"
+          >
+            <svg class="case-study-deck-fullscreen-icon" viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.25 3C11.8344 3 11.5 3.33437 11.5 3.75C11.5 4.16563 11.8344 4.5 12.25 4.5H14.4406L10 8.94063L5.55938 4.5H7.75C8.16563 4.5 8.5 4.16563 8.5 3.75C8.5 3.33437 8.16563 3 7.75 3H3.75C3.33437 3 3 3.33437 3 3.75V7.75C3 8.16563 3.33437 8.5 3.75 8.5C4.16563 8.5 4.5 8.16563 4.5 7.75V5.55938L8.94063 10L4.5 14.4406V12.25C4.5 11.8344 4.16563 11.5 3.75 11.5C3.33437 11.5 3 11.8344 3 12.25V16.25C3 16.6656 3.33437 17 3.75 17H7.75C8.16563 17 8.5 16.6656 8.5 16.25C8.5 15.8344 8.16563 15.5 7.75 15.5H5.55938L10 11.0594L14.4406 15.5H12.25C11.8344 15.5 11.5 15.8344 11.5 16.25C11.5 16.6656 11.8344 17 12.25 17H16.25C16.6656 17 17 16.6656 17 16.25V12.25C17 11.8344 16.6656 11.5 16.25 11.5C15.8344 11.5 15.5 11.8344 15.5 12.25V14.4406L11.0594 10L15.5 5.55938V7.75C15.5 8.16563 15.8344 8.5 16.25 8.5C16.6656 8.5 17 8.16563 17 7.75V3.75C17 3.33437 16.6656 3 16.25 3H12.25Z"/>
+            </svg>
+            <span class="case-study-deck-label">Fullscreen</span>
+          </button>
+          <button
             class="case-study-deck-button case-study-deck-arrow product-block-link"
             type="button"
             data-deck-next
@@ -167,8 +178,8 @@
       <span class="return-cursor-label">Kaustubh Mokashi</span>
       <span class="return-cursor-prompt"></span>
     </div>
-    <script src="../version.js?v=1.0.12"></script>
-    <script src="../script.js?v=1.0.12"></script>
+    <script src="../version.js?v=1.0.13"></script>
+    <script src="../script.js?v=1.0.13"></script>
     <script>
       (() => {
       const CASE_STUDY_DECK_WEB_APP_URL =
@@ -181,6 +192,7 @@
       const deckLoading = document.querySelector("[data-case-study-deck-loading]");
       const prevBtn = document.querySelector("[data-deck-prev]");
       const nextBtn = document.querySelector("[data-deck-next]");
+      const fullscreenBtn = document.querySelector("[data-deck-fullscreen]");
       let slides = Array.from(document.querySelectorAll(".case-study-slide"));
       let activeIndex = 0;
 
@@ -261,6 +273,20 @@
       const bindDeckInteractions = () => {
         prevBtn?.addEventListener("click", () => setSlide(activeIndex - 1));
         nextBtn?.addEventListener("click", () => setSlide(activeIndex + 1));
+        fullscreenBtn?.addEventListener("click", async () => {
+          const fullscreenTarget = document.querySelector(".case-study-deck");
+          if (!fullscreenTarget) return;
+
+          try {
+            if (document.fullscreenElement) {
+              await document.exitFullscreen();
+            } else {
+              await fullscreenTarget.requestFullscreen();
+            }
+          } catch (error) {
+            console.error("Fullscreen toggle failed", error);
+          }
+        });
 
         document.addEventListener("keydown", (event) => {
           if (event.key === "ArrowRight" || event.key === "PageDown") {

@@ -921,6 +921,26 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
   color: #ececec;
 }
 
+.case-study-deck-fullscreen {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #ececec;
+}
+
+.case-study-deck-fullscreen:hover,
+.case-study-deck-fullscreen:focus-visible {
+  color: #ececec;
+}
+
+.case-study-deck-fullscreen-icon {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+  flex: 0 0 auto;
+}
+
 .case-study-deck-arrow {
   padding: 8px 16px;
   gap: 8px;
