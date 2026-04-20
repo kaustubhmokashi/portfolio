@@ -64,6 +64,35 @@
           </div>
         </div>
         <div class="case-study-deck-stage" role="region" aria-live="polite" data-case-study-stage>
+          <button
+            class="case-study-deck-tap-zone case-study-deck-tap-zone-prev"
+            type="button"
+            data-deck-zone-prev
+            aria-label="Previous slide"
+          >
+            <svg class="cta-arrow" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12L12 5L13.4 6.4L9.8 10H19V12H9.8L13.4 15.6L12 17L5 12Z" />
+            </svg>
+          </button>
+          <button
+            class="case-study-deck-tap-zone case-study-deck-tap-zone-next"
+            type="button"
+            data-deck-zone-next
+            aria-label="Next slide"
+          >
+            <svg class="cta-arrow" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14 5L21 12L14 19L12.6 17.6L16.2 14H7V12H16.2L12.6 8.4L14 5Z" />
+            </svg>
+          </button>
+          <button
+            class="case-study-deck-close"
+            type="button"
+            data-deck-close
+            aria-label="Close presentation mode"
+          >
+            <span></span>
+            <span></span>
+          </button>
           <article class="case-study-slide is-active" data-slide="1">
             <img
               class="case-study-slide-image"
@@ -71,6 +100,7 @@
               alt="Case study slide 1"
             />
           </article>
+          <div class="case-study-deck-toast" data-deck-toast aria-live="polite"></div>
         </div>
         <div class="case-study-deck-controls">
           <button
@@ -88,12 +118,12 @@
             class="case-study-deck-button case-study-deck-fullscreen"
             type="button"
             data-deck-fullscreen
-            aria-label="Toggle fullscreen"
+            aria-label="Enter presentation mode"
           >
             <svg class="case-study-deck-fullscreen-icon" viewBox="0 0 20 20" aria-hidden="true">
-              <path d="M12.25 3C11.8344 3 11.5 3.33437 11.5 3.75C11.5 4.16563 11.8344 4.5 12.25 4.5H14.4406L10 8.94063L5.55938 4.5H7.75C8.16563 4.5 8.5 4.16563 8.5 3.75C8.5 3.33437 8.16563 3 7.75 3H3.75C3.33437 3 3 3.33437 3 3.75V7.75C3 8.16563 3.33437 8.5 3.75 8.5C4.16563 8.5 4.5 8.16563 4.5 7.75V5.55938L8.94063 10L4.5 14.4406V12.25C4.5 11.8344 4.16563 11.5 3.75 11.5C3.33437 11.5 3 11.8344 3 12.25V16.25C3 16.6656 3.33437 17 3.75 17H7.75C8.16563 17 8.5 16.6656 8.5 16.25C8.5 15.8344 8.16563 15.5 7.75 15.5H5.55938L10 11.0594L14.4406 15.5H12.25C11.8344 15.5 11.5 15.8344 11.5 16.25C11.5 16.6656 11.8344 17 12.25 17H16.25C16.6656 17 17 16.6656 17 16.25V12.25C17 11.8344 16.6656 11.5 16.25 11.5C15.8344 11.5 15.5 11.8344 15.5 12.25V14.4406L11.0594 10L15.5 5.55938V7.75C15.5 8.16563 15.8344 8.5 16.25 8.5C16.6656 8.5 17 8.16563 17 7.75V3.75C17 3.33437 16.6656 3 16.25 3H12.25Z"/>
+              <path d="M2.75 3C2.33437 3 2 3.33437 2 3.75C2 4.16563 2.33437 4.5 2.75 4.5H3V12C3 13.1031 3.89688 14 5 14H9.25V15.1094L7.06875 16.6344C6.72812 16.8719 6.64688 17.3406 6.88438 17.6781C7.12188 18.0156 7.59062 18.1 7.92812 17.8625L9.99687 16.4125L12.0656 17.8625C12.4063 18.1 12.8719 18.0188 13.1094 17.6781C13.3469 17.3375 13.2656 16.8719 12.925 16.6344L10.7437 15.1094V14H14.9937C16.0969 14 16.9937 13.1031 16.9937 12V4.5H17.2437C17.6594 4.5 17.9937 4.16563 17.9937 3.75C17.9937 3.33437 17.6594 3 17.2437 3H2.75ZM15.5 4.5V12C15.5 12.275 15.275 12.5 15 12.5H5C4.725 12.5 4.5 12.275 4.5 12V4.5H15.5Z"/>
             </svg>
-            <span class="case-study-deck-label">Fullscreen</span>
+            <span class="case-study-deck-label">Presentation mode</span>
           </button>
           <button
             class="case-study-deck-button case-study-deck-arrow product-block-link"
@@ -178,8 +208,8 @@
       <span class="return-cursor-label">Kaustubh Mokashi</span>
       <span class="return-cursor-prompt"></span>
     </div>
-    <script src="../version.js?v=1.0.13"></script>
-    <script src="../script.js?v=1.0.13"></script>
+    <script src="../version.js?v=1.0.14"></script>
+    <script src="../script.js?v=1.0.14"></script>
     <script>
       (() => {
       const CASE_STUDY_DECK_WEB_APP_URL =
@@ -192,9 +222,49 @@
       const deckLoading = document.querySelector("[data-case-study-deck-loading]");
       const prevBtn = document.querySelector("[data-deck-prev]");
       const nextBtn = document.querySelector("[data-deck-next]");
+      const zonePrevBtn = document.querySelector("[data-deck-zone-prev]");
+      const zoneNextBtn = document.querySelector("[data-deck-zone-next]");
       const fullscreenBtn = document.querySelector("[data-deck-fullscreen]");
+      const closeBtn = document.querySelector("[data-deck-close]");
+      const toast = document.querySelector("[data-deck-toast]");
       let slides = Array.from(document.querySelectorAll(".case-study-slide"));
       let activeIndex = 0;
+      let toastTimer = 0;
+      let presentationUiTimer = 0;
+      const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+
+      const showDeckToast = (message) => {
+        if (!toast || !message) return;
+        window.clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.classList.add("is-visible");
+        toastTimer = window.setTimeout(() => {
+          toast.classList.remove("is-visible");
+        }, 2000);
+      };
+
+      const showPresentationUi = () => {
+        if (!deckStage) return;
+        deckStage.classList.remove("is-ui-hidden");
+      };
+
+      const hidePresentationUi = () => {
+        if (!deckStage) return;
+        deckStage.classList.add("is-ui-hidden");
+      };
+
+      const resetPresentationUiTimer = () => {
+        if (!deckStage || !coarsePointer || document.fullscreenElement !== deckStage) {
+          window.clearTimeout(presentationUiTimer);
+          showPresentationUi();
+          return;
+        }
+        showPresentationUi();
+        window.clearTimeout(presentationUiTimer);
+        presentationUiTimer = window.setTimeout(() => {
+          hidePresentationUi();
+        }, 1000);
+      };
 
       const extractDriveFileId = (url) => {
         if (!url) return "";
@@ -238,7 +308,7 @@
 
       const rebuildSlides = (photos, title) => {
         if (!deckStage || !photos.length) return;
-        deckStage.innerHTML = "";
+        deckStage.querySelectorAll(".case-study-slide").forEach((slide) => slide.remove());
         const fragment = document.createDocumentFragment();
 
         photos.forEach((photo, index) => {
@@ -254,9 +324,13 @@
           slide.appendChild(image);
           fragment.appendChild(slide);
         });
-
-        deckStage.appendChild(fragment);
-        slides = Array.from(document.querySelectorAll(".case-study-slide"));
+        const toastNode = deckStage.querySelector("[data-deck-toast]");
+        if (toastNode) {
+          deckStage.insertBefore(fragment, toastNode);
+        } else {
+          deckStage.appendChild(fragment);
+        }
+        slides = Array.from(deckStage.querySelectorAll(".case-study-slide"));
         activeIndex = 0;
       };
 
@@ -264,6 +338,13 @@
         if (!deckStage) return;
         const baseWidth = 1920;
         const baseHeight = 1080;
+        if (document.fullscreenElement === deckStage) {
+          deckStage.style.width = "100vw";
+          deckStage.style.height = "100vh";
+          deckStage.style.removeProperty("--deck-scale");
+          return;
+        }
+        deckStage.style.removeProperty("width");
         const stageWidth = deckStage.clientWidth || baseWidth;
         const scale = stageWidth / baseWidth;
         deckStage.style.setProperty("--deck-scale", scale.toFixed(4));
@@ -273,53 +354,50 @@
       const bindDeckInteractions = () => {
         prevBtn?.addEventListener("click", () => setSlide(activeIndex - 1));
         nextBtn?.addEventListener("click", () => setSlide(activeIndex + 1));
+        zonePrevBtn?.addEventListener("click", () => {
+          resetPresentationUiTimer();
+          setSlide(activeIndex - 1);
+        });
+        zoneNextBtn?.addEventListener("click", () => {
+          resetPresentationUiTimer();
+          setSlide(activeIndex + 1);
+        });
         fullscreenBtn?.addEventListener("click", async () => {
-          const fullscreenTarget = document.querySelector(".case-study-deck");
+          if (document.fullscreenElement) {
+            return;
+          }
+          const fullscreenTarget = deckStage;
           if (!fullscreenTarget) return;
 
           try {
-            if (document.fullscreenElement) {
-              await document.exitFullscreen();
-            } else {
-              await fullscreenTarget.requestFullscreen();
-            }
+            await fullscreenTarget.requestFullscreen();
           } catch (error) {
             console.error("Fullscreen toggle failed", error);
           }
+        });
+        closeBtn?.addEventListener("click", async () => {
+          if (!document.fullscreenElement) return;
+          try {
+            await document.exitFullscreen();
+          } catch (error) {
+            console.error("Fullscreen exit failed", error);
+          }
+        });
+        deckStage?.addEventListener("pointerdown", () => {
+          resetPresentationUiTimer();
         });
 
         document.addEventListener("keydown", (event) => {
           if (event.key === "ArrowRight" || event.key === "PageDown") {
             event.preventDefault();
+            resetPresentationUiTimer();
             setSlide(activeIndex + 1);
           }
           if (event.key === "ArrowLeft" || event.key === "PageUp") {
             event.preventDefault();
+            resetPresentationUiTimer();
             setSlide(activeIndex - 1);
           }
-        });
-
-        let touchStartX = 0;
-        let touchActive = false;
-
-        deckStage?.addEventListener("touchstart", (event) => {
-          if (event.touches.length !== 1) return;
-          touchActive = true;
-          touchStartX = event.touches[0].clientX;
-        });
-
-        deckStage?.addEventListener("touchend", (event) => {
-          if (!touchActive) return;
-          const touchEndX = event.changedTouches[0]?.clientX || 0;
-          const deltaX = touchEndX - touchStartX;
-          if (Math.abs(deltaX) > 40) {
-            if (deltaX < 0) {
-              setSlide(activeIndex + 1);
-            } else {
-              setSlide(activeIndex - 1);
-            }
-          }
-          touchActive = false;
         });
       };
 
@@ -373,6 +451,20 @@
       };
 
       window.addEventListener("resize", resizeDeck);
+      document.addEventListener("fullscreenchange", () => {
+        resizeDeck();
+        if (document.fullscreenElement === deckStage) {
+          showDeckToast(
+            coarsePointer
+              ? "Tap left for previous, and right for next"
+              : "Use arrow keys ← → to Navigate"
+          );
+          resetPresentationUiTimer();
+        } else {
+          window.clearTimeout(presentationUiTimer);
+          showPresentationUi();
+        }
+      });
       loadCaseStudyDeck();
       })();
     </script>
