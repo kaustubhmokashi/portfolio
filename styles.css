@@ -406,6 +406,146 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
   color: rgba(236, 236, 236, 0.66);
 }
 
+.live-products-loading {
+  display: none;
+  width: 100%;
+  margin-top: 24px;
+}
+
+.is-live-products-loading .live-products-loading {
+  display: block;
+}
+
+.is-live-products-loading .product-block-live {
+  display: none;
+}
+
+.is-passion-projects-loading .live-products-loading,
+.is-case-studies-loading .live-products-loading {
+  display: block;
+}
+
+.is-passion-projects-loading .product-block-passion,
+.is-case-studies-loading .product-block-live {
+  display: none;
+}
+
+.is-passion-projects-loading .passion-repo-callout {
+  display: none;
+}
+
+.live-products-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.live-products-skeleton-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 508px);
+  gap: 48px;
+  padding: 70px 52px 70px 44px;
+  border: 1px solid rgba(236, 236, 236, 0.16);
+  border-radius: 10px;
+  background: rgba(236, 236, 236, 0.04);
+}
+
+.live-products-skeleton-body,
+.live-products-skeleton-visual {
+  display: flex;
+  flex-direction: column;
+}
+
+.live-products-skeleton-body {
+  align-items: flex-start;
+}
+
+.live-products-skeleton-visual {
+  align-items: flex-end;
+  padding-right: 8px;
+}
+
+.live-products-skeleton {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgba(236, 236, 236, 0.08);
+}
+
+.live-products-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    rgba(236, 236, 236, 0) 0%,
+    rgba(236, 236, 236, 0.14) 45%,
+    rgba(236, 236, 236, 0) 100%
+  );
+  animation: live-products-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.live-products-skeleton-kicker {
+  width: 154px;
+  height: 14px;
+}
+
+.live-products-skeleton-title {
+  width: min(503px, 100%);
+  height: 54px;
+  margin-top: 40px;
+}
+
+.live-products-skeleton-title.short {
+  width: min(360px, 78%);
+  margin-top: 12px;
+}
+
+.live-products-skeleton-copy {
+  width: min(503px, 100%);
+  height: 24px;
+  margin-top: 24px;
+}
+
+.live-products-skeleton-copy.short {
+  width: min(420px, 84%);
+}
+
+.live-products-skeleton-stats {
+  display: flex;
+  gap: 100px;
+  margin-top: 24px;
+}
+
+.live-products-skeleton-stat {
+  width: 140px;
+  height: 80px;
+}
+
+.live-products-skeleton-cta {
+  width: 180px;
+  height: 30px;
+  margin-top: 24px;
+}
+
+.live-products-skeleton-frame {
+  width: 500px;
+  max-width: 100%;
+  aspect-ratio: 4 / 3;
+  margin-top: 30px;
+  border-radius: 16px;
+  background: #0a0a0a;
+  box-shadow: inset 0 0 74px #000;
+}
+
+@keyframes live-products-skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .case-studies-heading {
   font-size: clamp(54px, 8vw, 112px);
   letter-spacing: 0;
@@ -2405,6 +2545,21 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
     gap: 48px;
     margin-top: 24px;
   }
+
+  .live-products-skeleton-card {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 48px 32px;
+  }
+
+  .live-products-skeleton-visual {
+    align-items: flex-start;
+    padding-right: 0;
+  }
+
+  .live-products-skeleton-stats {
+    gap: 48px;
+  }
 }
 
 .product-block-meta {
@@ -3715,6 +3870,53 @@ body.menu-open .top-menu-toggle span:nth-child(3) {
 
   .page-panel-live .page-heading {
     white-space: normal;
+  }
+
+  .live-products-loading {
+    margin-top: 16px;
+  }
+
+  .live-products-skeleton-card {
+    padding: 32px 24px;
+    gap: 16px;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .live-products-skeleton-title {
+    height: 34px;
+    margin-top: 16px;
+  }
+
+  .live-products-skeleton-title.short {
+    margin-top: 8px;
+  }
+
+  .live-products-skeleton-copy {
+    height: 18px;
+    margin-top: 16px;
+  }
+
+  .live-products-skeleton-stats {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .live-products-skeleton-stat {
+    width: 100%;
+    max-width: 180px;
+    height: 60px;
+  }
+
+  .live-products-skeleton-cta {
+    margin-top: 16px;
+  }
+
+  .live-products-skeleton-frame {
+    width: 100%;
+    margin-top: 0;
   }
 
   .product-block-top {

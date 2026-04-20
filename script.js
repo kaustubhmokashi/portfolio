@@ -309,7 +309,7 @@ const initProjectLocks = () => {
     const visibilityToggle = lockNode.querySelector(".project-lock-visibility");
     const requiredPassword = csvLock?.password || null;
 
-    if (!encryptedPayload || !mount || !form || !input || !error) {
+    if (!mount || !form || !input || !error) {
       return;
     }
 
@@ -353,7 +353,14 @@ const initProjectLocks = () => {
           error.textContent = "That password didn’t match.";
           return;
         }
-        mount.innerHTML = encryptedPayload;
+        const record = csvLock?.record || null;
+        const rowIndex = csvLock?.rowIndex || Number(lockNode.dataset.csvIndex || 0);
+        if (!record) {
+          error.textContent = "The project unlocked, but cached row data was unavailable.";
+          return;
+        }
+        applyCardData(lockNode, record);
+        normalizeGeneratedCard(lockNode, rowIndex, record);
         unlock();
         return;
       }
@@ -3373,6 +3380,13 @@ const parseCsv = (text) => {
   return rows;
 };
 
+const LIVE_PRODUCTS_WEB_APP_URL =
+  "https://script.google.com/macros/s/AKfycbx4Wo4fuWiZGzrm84IV-a8TqlQSekLLXIoiRLH2aKFyRZinyobKYJbBJwEpgEnvyHG3/exec?sheet=Live%20Products";
+const PASSION_PROJECTS_WEB_APP_URL =
+  "https://script.google.com/macros/s/AKfycbx4Wo4fuWiZGzrm84IV-a8TqlQSekLLXIoiRLH2aKFyRZinyobKYJbBJwEpgEnvyHG3/exec?sheet=Passion%20Project";
+const CASE_STUDIES_WEB_APP_URL =
+  "https://script.google.com/macros/s/AKfycbx4Wo4fuWiZGzrm84IV-a8TqlQSekLLXIoiRLH2aKFyRZinyobKYJbBJwEpgEnvyHG3/exec?sheet=Case%20Studies";
+
 const arrowSvgMarkup =
   '<svg class="cta-arrow" aria-hidden="true" viewBox="0 0 22 22" role="presentation"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.3473 5.01405C12.4762 4.8853 12.651 4.81299 12.8332 4.81299C13.0154 4.81299 13.1901 4.8853 13.319 5.01405L18.819 10.5141C18.9478 10.643 19.0201 10.8177 19.0201 10.9999C19.0201 11.1821 18.9478 11.3568 18.819 11.4857L13.319 16.9857C13.2561 17.0533 13.1802 17.1074 13.0958 17.145C13.0115 17.1826 12.9205 17.2028 12.8281 17.2044C12.7358 17.2061 12.6441 17.1891 12.5585 17.1545C12.4729 17.1199 12.3952 17.0685 12.3299 17.0032C12.2646 16.9379 12.2131 16.8601 12.1786 16.7745C12.144 16.6889 12.127 16.5972 12.1286 16.5049C12.1303 16.4126 12.1505 16.3216 12.188 16.2372C12.2256 16.1529 12.2798 16.077 12.3473 16.014L16.674 11.6874H3.6665C3.48417 11.6874 3.3093 11.615 3.18037 11.486C3.05144 11.3571 2.979 11.1822 2.979 10.9999C2.979 10.8175 3.05144 10.6427 3.18037 10.5137C3.3093 10.3848 3.48417 10.3124 3.6665 10.3124H16.674L12.3473 5.98572C12.2186 5.85681 12.1463 5.68207 12.1463 5.49988C12.1463 5.3177 12.2186 5.14296 12.3473 5.01405Z"/></svg>';
 
@@ -3404,6 +3418,34 @@ const normalizeDriveImageLink = (value) => {
   const fileId = fileIdMatch[1];
   return `https://lh3.googleusercontent.com/d/${fileId}`;
 };
+
+const normalizeBooleanString = (value) => String(value || "").trim().toLowerCase() === "true";
+
+const mapLiveProductRecord = (record = {}) => ({
+  row_index: Number(record.row_index || 0),
+  pre_title: record.pre_title || "",
+  title: record.title || "",
+  description: record.description || "",
+  data_point_1_title: record.first_data_point_title || record.data_point_1_title || "",
+  data_point_1_text: record.first_data_point_text || record.data_point_1_text || "",
+  data_point_2_title: record.second_data_point_title || record.data_point_2_title || "",
+  data_point_2_text: record.second_data_point_text || record.data_point_2_text || "",
+  cta_1_text: record.cta_1_text || "",
+  cta_1_link: record.cta_1_link || "",
+  cta_2_text: record.cta_2_text || "",
+  cta_2_link: record.cta_2_link || "",
+  cta_3_text: record.cta_3_text || "",
+  cta_3_link: record.cta_3_link || "",
+  project_image_link: record.project_image_link || "",
+  case_study_photos: record.case_study_photos || "",
+  lock: normalizeBooleanString(record.lock) ? "true" : "false",
+  password: record.password || "",
+});
+
+const buildCaseStudyViewerLink = (rowIndex) =>
+  `./case-studies/paperpal-reference-library.html?sheet=Case%20Studies&row=${encodeURIComponent(
+    rowIndex
+  )}`;
 
 const extractDriveFileId = (url) => {
   if (!url) {
@@ -3504,10 +3546,11 @@ const applyCardData = (card, record) => {
     anchor.className = className;
     const href = cta.link?.trim() || "#";
     anchor.href = href;
+    const isExternalLink = /^https?:\/\//i.test(href);
     if (!cta.link || href === "#") {
       anchor.setAttribute("aria-disabled", "true");
       anchor.tabIndex = -1;
-    } else {
+    } else if (isExternalLink) {
       anchor.setAttribute("target", "_blank");
       anchor.setAttribute("rel", "noreferrer");
     }
@@ -3591,6 +3634,237 @@ const normalizeGeneratedCard = (card, index, record) => {
   }
 };
 
+const createCardFromMarkup = (markup) => {
+  const template = document.createElement("template");
+  template.innerHTML = markup.trim();
+  return template.content.firstElementChild;
+};
+
+const prepareCardForRender = (card) => {
+  if (!card) {
+    return;
+  }
+  card.hidden = false;
+  card.style.display = "";
+  card.style.visibility = "visible";
+  card.style.opacity = "";
+  card.style.transform = "";
+};
+
+const initSheetDrivenCardPage = async ({
+  pageSelector,
+  containerSelector,
+  cardSelector,
+  featuredSelector,
+  standardSelector,
+  dataUrl,
+  loadingSelector,
+  loadingClass,
+  transformRecord,
+}) => {
+  const pageContainer = document.querySelector(pageSelector);
+  if (!pageContainer) {
+    return;
+  }
+
+  const container = document.querySelector(containerSelector);
+  const loadingNode = loadingSelector ? document.querySelector(loadingSelector) : null;
+  const cards = [...document.querySelectorAll(cardSelector)];
+  if (!container || !cards.length) {
+    if (loadingClass) {
+      document.body.classList.remove(loadingClass);
+    }
+    loadingNode?.setAttribute("hidden", "");
+    return;
+  }
+
+  const featuredTemplate = container.querySelector(featuredSelector);
+  const standardTemplate = container.querySelector(standardSelector);
+  const featuredTemplateMarkup = featuredTemplate?.outerHTML || "";
+  const standardTemplateMarkup = standardTemplate?.outerHTML || featuredTemplateMarkup;
+
+  if (loadingClass) {
+    document.body.classList.add(loadingClass);
+  }
+  loadingNode?.removeAttribute("hidden");
+
+  try {
+    const response = await fetch(dataUrl, {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Sheet fetch failed with ${response.status}`);
+    }
+
+    const payload = await response.json();
+    const rows = Array.isArray(payload?.rows) ? payload.rows : [];
+    if (!rows.length) {
+      throw new Error("Sheet returned no rows");
+    }
+
+    cards.forEach((card) => card.remove());
+
+    const fragment = document.createDocumentFragment();
+
+    rows.forEach((row, index) => {
+      const baseRecord = mapLiveProductRecord(row);
+      const record = typeof transformRecord === "function" ? transformRecord(baseRecord) : baseRecord;
+      const markup = index === 0 ? featuredTemplateMarkup || standardTemplateMarkup : standardTemplateMarkup;
+      if (!markup) {
+        return;
+      }
+
+      const card = createCardFromMarkup(markup);
+      if (!card) {
+        return;
+      }
+
+      prepareCardForRender(card);
+      applyCardData(card, record);
+      normalizeGeneratedCard(card, index + 1, record);
+
+      if (index === 0) {
+        card.classList.add(...(featuredTemplate?.className?.split(" ") || []).filter(Boolean));
+      } else {
+        card.classList.remove("product-block-featured-live", "product-block-featured-passion");
+      }
+
+      card.dataset.csvIndex = String(record.row_index || index + 1);
+      fragment.appendChild(card);
+    });
+
+    container.appendChild(fragment);
+    [...container.querySelectorAll(cardSelector)].forEach(prepareCardForRender);
+    if (loadingClass) {
+      document.body.classList.remove(loadingClass);
+    }
+    loadingNode?.setAttribute("hidden", "");
+    requestAnimationFrame(() => {
+      revealCards();
+      ensureUnifiedPlaceholders();
+      if (typeof updateParallaxTargets === "function") {
+        updateParallaxTargets();
+      }
+    });
+  } catch (error) {
+  } finally {
+    if (loadingClass) {
+      document.body.classList.remove(loadingClass);
+    }
+    loadingNode?.setAttribute("hidden", "");
+  }
+};
+
+const initCsvContent = async () => {
+  const liveProductsContainer = document.querySelector('.page-panel-live[aria-label="Live Products"]');
+  if (!liveProductsContainer) {
+    return;
+  }
+
+  const container = liveProductsContainer;
+  const loadingNode = document.querySelector("[data-live-products-loading]");
+  const cards = [...document.querySelectorAll(".product-block.product-block-live")];
+
+  if (!container || !cards.length) {
+    document.body.classList.remove("is-live-products-loading");
+    loadingNode?.setAttribute("hidden", "");
+    return;
+  }
+
+  const featuredTemplate = container.querySelector(".product-block.product-block-featured-live");
+  const standardTemplate = container.querySelector(
+    ".product-block.product-block-live:not(.product-block-featured-live):not(.project-lock)"
+  );
+  const lockedTemplate = container.querySelector(".product-block.product-block-live.project-lock");
+  const featuredTemplateMarkup = featuredTemplate?.outerHTML || "";
+  const standardTemplateMarkup = standardTemplate?.outerHTML || "";
+  const lockedTemplateMarkup = lockedTemplate?.outerHTML || "";
+
+  document.body.classList.add("is-live-products-loading");
+  loadingNode?.removeAttribute("hidden");
+
+  try {
+    const response = await fetch(LIVE_PRODUCTS_WEB_APP_URL, {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Live products fetch failed with ${response.status}`);
+    }
+
+    const payload = await response.json();
+    const rows = Array.isArray(payload?.rows) ? payload.rows : [];
+
+    if (!rows.length) {
+      throw new Error("Live products sheet returned no rows");
+    }
+
+    Object.keys(csvLocksById).forEach((key) => {
+      delete csvLocksById[key];
+    });
+
+    cards.forEach((card) => card.remove());
+
+    const fragment = document.createDocumentFragment();
+
+    rows.forEach((row, index) => {
+      const record = mapLiveProductRecord(row);
+      const templateMarkup =
+        record.lock === "true"
+          ? lockedTemplateMarkup || standardTemplateMarkup || featuredTemplateMarkup
+          : index === 0
+            ? featuredTemplateMarkup || standardTemplateMarkup || lockedTemplateMarkup
+            : standardTemplateMarkup || featuredTemplateMarkup || lockedTemplateMarkup;
+
+      if (!templateMarkup) {
+        return;
+      }
+
+      const card = createCardFromMarkup(templateMarkup);
+      if (!card) {
+        return;
+      }
+      prepareCardForRender(card);
+      card.dataset.csvIndex = String(record.row_index || index + 1);
+      card.classList.toggle("product-block-featured-live", index === 0 && record.lock !== "true");
+      card.classList.toggle("project-lock", record.lock === "true");
+      card.classList.toggle("is-locked", record.lock === "true");
+
+      if (record.lock === "true" && card.dataset.projectLock) {
+        csvLocksById[card.dataset.projectLock] = {
+          password: record.password || "",
+          rowIndex: record.row_index || index + 1,
+          record,
+        };
+        normalizeGeneratedCard(card, index + 1, record);
+      } else {
+        applyCardData(card, record);
+        normalizeGeneratedCard(card, index + 1, record);
+      }
+
+      fragment.appendChild(card);
+    });
+
+    container.appendChild(fragment);
+    const renderedCardNodes = [
+      ...container.querySelectorAll(".product-block.product-block-live"),
+    ];
+    renderedCardNodes.forEach(prepareCardForRender);
+    document.body.classList.remove("is-live-products-loading");
+    loadingNode?.setAttribute("hidden", "");
+    requestAnimationFrame(() => {
+      revealCards();
+    });
+  } catch (error) {
+  } finally {
+    document.body.classList.remove("is-live-products-loading");
+    loadingNode?.setAttribute("hidden", "");
+  }
+};
+
 const selectTemplateCard = (container, index, record) => {
   const featured = container.querySelector(
     ".product-block.product-block-featured-live, .product-block.product-block-featured-passion"
@@ -3629,6 +3903,7 @@ const ensureUnifiedPlaceholders = () => {
       }
       return;
     }
+    frame.querySelectorAll(".product-visual-locked").forEach((node) => node.remove());
     const frameImage =
       frame.dataset.image ||
       frame.closest("[data-project-image]")?.dataset.projectImage ||
@@ -3667,6 +3942,43 @@ if (typeof initCsvContent === "function") {
   initCsvContent()
     .catch(() => {})
     .finally(() => {
+      initSheetDrivenCardPage({
+        pageSelector: '.page-panel-passion[aria-label="Passion Projects"]',
+        containerSelector: ".page-panel-passion",
+        cardSelector: ".product-block.product-block-passion",
+        featuredSelector: ".product-block.product-block-featured-passion",
+        standardSelector: ".product-block.product-block-passion:not(.product-block-featured-passion)",
+        dataUrl: PASSION_PROJECTS_WEB_APP_URL,
+        loadingSelector: "[data-passion-projects-loading]",
+        loadingClass: "is-passion-projects-loading",
+      });
+      initSheetDrivenCardPage({
+        pageSelector: '.page-panel-live[aria-label="Case Studies"]',
+        containerSelector: '.page-panel-live[aria-label="Case Studies"]',
+        cardSelector: ".product-block.product-block-live",
+        featuredSelector: ".product-block.product-block-featured-live",
+        standardSelector: ".product-block.product-block-live:not(.product-block-featured-live)",
+        dataUrl: CASE_STUDIES_WEB_APP_URL,
+        loadingSelector: "[data-case-studies-loading]",
+        loadingClass: "is-case-studies-loading",
+        transformRecord: (record) => {
+          const normalizedPhotos = String(record.case_study_photos || "").trim();
+          return {
+            ...record,
+            cta_1_link:
+              record.cta_1_text && !record.cta_1_link
+                ? buildCaseStudyViewerLink(record.row_index)
+                : record.cta_1_link,
+            project_image_link:
+              record.project_image_link ||
+              normalizedPhotos
+                .split(/\r?\n|,|\|/g)
+                .map((item) => normalizeDriveImageLink(item.trim()))
+                .find(Boolean) ||
+              "",
+          };
+        },
+      });
       initProjectLocks();
       ensureUnifiedPlaceholders();
       if (typeof updateParallaxTargets === "function") {
