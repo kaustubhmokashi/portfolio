@@ -3419,13 +3419,22 @@ const normalizeDriveImageLink = (value) => {
   return `https://lh3.googleusercontent.com/d/${fileId}`;
 };
 
-const normalizeBooleanString = (value) => String(value || "").trim().toLowerCase() === "true";
+const normalizeBooleanString = (value) => {
+  const normalized = String(value || "").trim().toLowerCase();
+  return ["true", "yes", "1", "y", "on"].includes(normalized);
+};
+
+const firstDefined = (...values) => values.find((value) => String(value || "").trim() !== "") || "";
 
 const mapLiveProductRecord = (record = {}) => ({
   row_index: Number(record.row_index || 0),
   pre_title: record.pre_title || "",
   title: record.title || "",
   description: record.description || "",
+  short_description:
+    firstDefined(record.short_description, record.short_desc, record.description) || "",
+  long_description:
+    firstDefined(record.long_description, record.long_desc, record.description) || "",
   data_point_1_title: record.first_data_point_title || record.data_point_1_title || "",
   data_point_1_text: record.first_data_point_text || record.data_point_1_text || "",
   data_point_2_title: record.second_data_point_title || record.data_point_2_title || "",
@@ -3436,11 +3445,388 @@ const mapLiveProductRecord = (record = {}) => ({
   cta_2_link: record.cta_2_link || "",
   cta_3_text: record.cta_3_text || "",
   cta_3_link: record.cta_3_link || "",
+  thumbnail_image_link:
+    firstDefined(
+      record.thumbnail_image,
+      record.thumbnail_image_link,
+      record.project_image_link,
+      record.image_link
+    ) || "",
+  hero_image_link:
+    firstDefined(record.hero_image, record.hero_image_link, record.project_image_link, record.thumbnail_image) ||
+    "",
   project_image_link: record.project_image_link || "",
   case_study_photos: record.case_study_photos || "",
   lock: normalizeBooleanString(record.lock) ? "true" : "false",
   password: record.password || "",
 });
+
+const createPassionProjectLink = (cta) => {
+  const anchor = document.createElement("a");
+  anchor.className = "product-block-link passion-detail-cta";
+  const href = cta?.link?.trim() || "#";
+  anchor.href = href;
+  const isExternalLink = /^https?:\/\//i.test(href);
+  if (!cta?.link || href === "#") {
+    anchor.setAttribute("aria-disabled", "true");
+    anchor.tabIndex = -1;
+  } else if (isExternalLink) {
+    anchor.setAttribute("target", "_blank");
+    anchor.setAttribute("rel", "noreferrer");
+  }
+  anchor.innerHTML = `${cta?.text || "Open"} ${arrowSvgMarkup}`;
+  return anchor;
+};
+
+const createPassionProjectCard = (record, index) => {
+  const normalizedThumbnail =
+    normalizeDriveImageLink(record.thumbnail_image_link || record.project_image_link || "") ||
+    "./favicon.svg";
+  const normalizedHero =
+    normalizeDriveImageLink(record.hero_image_link || record.project_image_link || normalizedThumbnail) ||
+    normalizedThumbnail ||
+    "./favicon.svg";
+  const card = document.createElement("article");
+  card.className = "product-block passion-project-card";
+  card.setAttribute("role", "button");
+  card.setAttribute("tabindex", "0");
+  card.setAttribute("aria-label", `Open ${record.title || "project"}`);
+  card.dataset.passionCard = "true";
+  card.dataset.cardIndex = String(index + 1);
+  card.dataset.searchText = [
+    record.pre_title,
+    record.title,
+    record.short_description,
+    record.long_description,
+    record.data_point_1_title,
+    record.data_point_1_text,
+    record.data_point_2_title,
+    record.data_point_2_text,
+    record.cta_1_text,
+    record.cta_2_text,
+    record.cta_3_text,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  card._passionRecord = {
+    ...record,
+    thumbnail_image_link: normalizedThumbnail,
+    hero_image_link: normalizedHero,
+    project_image_link: normalizedThumbnail,
+  };
+
+  const thumb = document.createElement("button");
+  thumb.type = "button";
+  thumb.className = "passion-project-thumb";
+  thumb.setAttribute("aria-label", `Open ${record.title || "project"}`);
+
+  const frame = document.createElement("div");
+  frame.className = "passion-project-thumb-frame";
+
+  const img = document.createElement("img");
+  img.className = "passion-project-thumb-image";
+  img.loading = "lazy";
+  img.alt = record.title || "Project preview";
+  img.src = normalizedThumbnail;
+  img.referrerPolicy = "no-referrer";
+  img.crossOrigin = "anonymous";
+  if (normalizedThumbnail.includes("drive.google.com")) {
+    applyDriveImageFallback(img);
+  }
+
+  const thumbBadge = document.createElement("span");
+  thumbBadge.className = "passion-project-thumb-badge";
+  thumbBadge.textContent =
+    record.pre_title
+      ?.trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .join(" ")
+      .toUpperCase() || "OPEN";
+
+  frame.appendChild(img);
+  frame.appendChild(thumbBadge);
+  thumb.appendChild(frame);
+
+  const kicker = document.createElement("p");
+  kicker.className = "product-block-kicker passion-project-kicker";
+  kicker.textContent = record.pre_title || "Independent Product";
+
+  const title = document.createElement("h2");
+  title.className = "product-block-title passion-project-title";
+  title.textContent = record.title || "";
+
+  const copy = document.createElement("p");
+  copy.className = "product-body-copy passion-project-copy";
+  copy.textContent = record.short_description || record.description || "";
+
+  const cta = document.createElement("button");
+  cta.type = "button";
+  cta.className = "product-block-link passion-project-open";
+  cta.innerHTML = `Open project ${arrowSvgMarkup}`;
+
+  card.append(thumb, kicker, title, copy, cta);
+  return card;
+};
+
+const createPassionProjectStat = (value, label) => {
+  const stat = document.createElement("div");
+  stat.className = "passion-detail-stat";
+
+  const valueNode = document.createElement("span");
+  valueNode.className = "passion-detail-stat-value";
+  valueNode.textContent = value || "";
+
+  const labelNode = document.createElement("span");
+  labelNode.className = "passion-detail-stat-label";
+  labelNode.textContent = label || "";
+
+  stat.append(valueNode, labelNode);
+  return stat;
+};
+
+const initPassionProjectsPage = async () => {
+  const pageContainer = document.querySelector('.page-panel-passion[aria-label="Passion Projects"]');
+  if (!pageContainer) {
+    return;
+  }
+
+  const grid = pageContainer.querySelector("[data-passion-projects-grid]");
+  const loadingNode = pageContainer.querySelector("[data-passion-projects-loading]");
+  const searchInput = pageContainer.querySelector("[data-passion-search]");
+  const detailPanel = pageContainer.querySelector("[data-passion-project-detail]");
+  const detailShell = detailPanel?.querySelector(".passion-detail-shell");
+  const detailClose = detailPanel?.querySelector(".passion-detail-close");
+  const detailImage = detailPanel?.querySelector(".passion-detail-image");
+  const detailKicker = detailPanel?.querySelector(".passion-detail-kicker");
+  const detailTitle = detailPanel?.querySelector(".passion-detail-title");
+  const detailCopy = detailPanel?.querySelector(".passion-detail-copy");
+  const detailBody = detailPanel?.querySelector(".passion-detail-body");
+  const detailStats = detailPanel?.querySelector(".passion-detail-stat-row");
+  const detailCtas = detailPanel?.querySelector(".passion-detail-cta-row");
+
+  if (!grid || !detailPanel || !detailShell) {
+    return;
+  }
+
+  document.body.classList.add("is-passion-projects-loading");
+  loadingNode?.removeAttribute("hidden");
+
+  let renderedCards = [];
+  let activeRecord = null;
+  let detailHideTimeout = 0;
+
+  const closeDetail = () => {
+    window.clearTimeout(detailHideTimeout);
+    detailPanel.classList.remove("is-active");
+    document.body.classList.remove("passion-detail-open");
+    detailHideTimeout = window.setTimeout(() => {
+      detailPanel.hidden = true;
+      detailPanel.setAttribute("aria-hidden", "true");
+    }, 220);
+  };
+
+  const openDetail = (card) => {
+    const record = card?._passionRecord;
+    if (!record) {
+      return;
+    }
+
+    activeRecord = record;
+    window.clearTimeout(detailHideTimeout);
+    detailPanel.hidden = false;
+    detailPanel.setAttribute("aria-hidden", "false");
+    requestAnimationFrame(() => {
+      detailPanel.classList.add("is-active");
+      document.body.classList.add("passion-detail-open");
+    });
+
+    if (detailImage) {
+      detailImage.alt = record.title || "Project preview";
+      const heroImage =
+        normalizeDriveImageLink(record.hero_image_link || record.project_image_link || "") ||
+        "./favicon.svg";
+      detailImage.src = heroImage;
+      if (heroImage.includes("drive.google.com")) {
+        applyDriveImageFallback(detailImage);
+      }
+    }
+    if (detailKicker) {
+      detailKicker.textContent = record.pre_title || "";
+    }
+    if (detailTitle) {
+      detailTitle.textContent = record.title || "";
+    }
+    if (detailCopy) {
+      detailCopy.textContent = record.short_description || record.description || "";
+    }
+    if (detailBody) {
+      const longDescription = record.long_description || record.description || "";
+      const statPieces = [
+        record.data_point_1_title && record.data_point_1_text
+          ? `${record.data_point_1_title} ${record.data_point_1_text}`
+          : "",
+        record.data_point_2_title && record.data_point_2_text
+          ? `${record.data_point_2_title} ${record.data_point_2_text}`
+          : "",
+      ].filter(Boolean);
+      detailBody.textContent =
+        longDescription ||
+        (statPieces.length > 0
+          ? `This project ships with ${statPieces.join(" and ")}.`
+          : record.short_description || record.description || "");
+    }
+    if (detailStats) {
+      detailStats.replaceChildren();
+      let hasStats = false;
+      if (record.data_point_1_title || record.data_point_1_text) {
+        detailStats.append(
+          createPassionProjectStat(record.data_point_1_title, record.data_point_1_text)
+        );
+        hasStats = true;
+      }
+      if (record.data_point_2_title || record.data_point_2_text) {
+        detailStats.append(
+          createPassionProjectStat(record.data_point_2_title, record.data_point_2_text)
+        );
+        hasStats = true;
+      }
+      detailStats.hidden = !hasStats;
+    }
+    if (detailCtas) {
+      detailCtas.replaceChildren();
+      const ctas = [
+        { text: record.cta_1_text, link: record.cta_1_link },
+        { text: record.cta_2_text, link: record.cta_2_link },
+        { text: record.cta_3_text, link: record.cta_3_link },
+      ].filter((cta) => cta.text && cta.link);
+
+      ctas.forEach((cta) => {
+        detailCtas.appendChild(createPassionProjectLink(cta));
+      });
+      detailCtas.hidden = !ctas.length;
+    }
+  };
+
+  const syncFilters = () => {
+    const query = (searchInput?.value || "").trim().toLowerCase();
+    renderedCards.forEach((card) => {
+      const searchText = [
+        card.dataset.searchText || "",
+        card.textContent || "",
+        card._passionRecord?.pre_title || "",
+        card._passionRecord?.title || "",
+        card._passionRecord?.description || "",
+        card._passionRecord?.data_point_1_title || "",
+        card._passionRecord?.data_point_1_text || "",
+        card._passionRecord?.data_point_2_title || "",
+        card._passionRecord?.data_point_2_text || "",
+        card._passionRecord?.cta_1_text || "",
+        card._passionRecord?.cta_2_text || "",
+        card._passionRecord?.cta_3_text || "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      const matches = !query || searchText.includes(query);
+      card.hidden = !matches;
+      card.classList.toggle("is-filtered-out", !matches);
+      card.style.display = matches ? "" : "none";
+      card.setAttribute("aria-hidden", String(!matches));
+    });
+  };
+
+  try {
+    const response = await fetch(PASSION_PROJECTS_WEB_APP_URL, {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Passion projects fetch failed with ${response.status}`);
+    }
+
+    const payload = await response.json();
+    const rows = Array.isArray(payload?.rows) ? payload.rows : [];
+    if (!rows.length) {
+      throw new Error("Passion projects sheet returned no rows");
+    }
+
+    grid.replaceChildren();
+    renderedCards = rows.map((row, index) => {
+      const record = mapLiveProductRecord(row);
+      const card = createPassionProjectCard(record, index);
+
+      card.addEventListener("click", (event) => {
+        if (event.target.closest("a, button")) {
+          return;
+        }
+        openDetail(card);
+      });
+
+      card.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openDetail(card);
+        }
+      });
+
+      const thumb = card.querySelector(".passion-project-thumb");
+      const openButton = card.querySelector(".passion-project-open");
+      thumb?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openDetail(card);
+      });
+      openButton?.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openDetail(card);
+      });
+
+      return card;
+    });
+
+    grid.append(...renderedCards);
+    requestAnimationFrame(() => {
+      revealCards();
+      ensureUnifiedPlaceholders();
+      if (typeof updateParallaxTargets === "function") {
+        updateParallaxTargets();
+      }
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener("input", syncFilters);
+      searchInput.addEventListener("change", syncFilters);
+      searchInput.addEventListener("keyup", syncFilters);
+      syncFilters();
+    }
+
+    detailPanel.addEventListener("click", (event) => {
+      if (event.target === detailPanel) {
+        closeDetail();
+      }
+    });
+
+    detailShell.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+
+    detailClose?.addEventListener("click", closeDetail);
+
+    document.addEventListener("keydown", (event) => {
+      if (!detailPanel.classList.contains("is-active")) {
+        return;
+      }
+      if (event.key === "Escape") {
+        closeDetail();
+      }
+    });
+  } catch (error) {
+  } finally {
+    document.body.classList.remove("is-passion-projects-loading");
+    loadingNode?.setAttribute("hidden", "");
+  }
+};
 
 const buildCaseStudyViewerLink = (rowIndex) =>
   `./case-studies/case-study-data.html?sheet=Case%20Studies&row=${encodeURIComponent(
@@ -3955,16 +4341,7 @@ if (typeof initCsvContent === "function") {
   initCsvContent()
     .catch(() => {})
     .finally(() => {
-      initSheetDrivenCardPage({
-        pageSelector: '.page-panel-passion[aria-label="Passion Projects"]',
-        containerSelector: ".page-panel-passion",
-        cardSelector: ".product-block.product-block-passion",
-        featuredSelector: ".product-block.product-block-featured-passion",
-        standardSelector: ".product-block.product-block-passion:not(.product-block-featured-passion)",
-        dataUrl: PASSION_PROJECTS_WEB_APP_URL,
-        loadingSelector: "[data-passion-projects-loading]",
-        loadingClass: "is-passion-projects-loading",
-      });
+      initPassionProjectsPage();
       initSheetDrivenCardPage({
         pageSelector: '.page-panel-live[aria-label="Case Studies"]',
         containerSelector: '.page-panel-live[aria-label="Case Studies"]',
